@@ -1,0 +1,9 @@
+{
+	"name": "pos"
+,	"private": true
+,	"type": "module"
+,	"scripts": {
+		"start": "node server/main.js"
+	,	"compact": "node tools/compact.js"
+	}
+}

@@ -1,0 +1,31 @@
+#	/etc/systemd/system/pos.service
+#
+#		sudo systemctl enable --now pos
+#
+#	Restart=always is the whole high-availability story for a single-site POS: the process
+#	comes back by itself, and the Pi comes back by itself when the power does. Anything
+#	fancier (a second node, automatic failover) adds more ways to break than it removes --
+#	the real spare is a second Pi on the shelf with data/pos rsynced onto it.
+
+[Unit]
+Description=POS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pos
+WorkingDirectory=/home/pos/POS
+Environment=PORT=8080
+EnvironmentFile=/home/pos/POS/.env
+ExecStart=/usr/bin/node server/main.js
+Restart=always
+RestartSec=2
+
+#	Order data must survive a hard power cut, so nothing here may buffer writes.
+#	AppendLog already fsyncs every record; systemd just needs to stay out of the way.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

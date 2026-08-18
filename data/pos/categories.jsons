@@ -1,0 +1,6 @@
+{"code":"D","name":"ドリンク","order":10}
+{"code":"A","name":"一品・サラダ","order":20}
+{"code":"Y","name":"焼き物","order":30}
+{"code":"F","name":"揚げ物","order":40}
+{"code":"S","name":"ごはん・〆","order":50}
+{"code":"Z","name":"デザート","order":60}

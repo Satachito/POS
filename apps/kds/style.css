@@ -1,0 +1,115 @@
+/*	Built for a monitor on a wall, read at two metres by someone holding a pan:
+	large type, high contrast, colour used only to mean "this has waited too long". */
+
+:root {
+	--bg		: #12141a;
+	--card		: #1e2230;
+	--ink		: #eef1f7;
+	--dim		: #8b93a7;
+	--line		: #2c3244;
+	--cooking	: #3b82f6;
+	--warn		: #d9822b;
+	--late		: #d64545;
+	--done		: #3f8f5f;
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+	background		: var(--bg);
+	color			: var(--ink);
+	font-family		: system-ui, -apple-system, "Hiragino Sans", sans-serif;
+	height			: 100vh;
+	display			: flex;
+	flex-direction	: column;
+}
+
+header {
+	display			: flex;
+	align-items		: center;
+	gap				: 1rem;
+	padding			: .6rem 1rem;
+	border-bottom	: 1px solid var(--line);
+}
+header h1	{ font-size: 1.1rem; letter-spacing: .1em; }
+nav			{ display: flex; gap: .4rem; margin-left: auto; }
+nav button {
+	background		: transparent;
+	border			: 1px solid var(--line);
+	color			: var(--dim);
+	border-radius	: 999px;
+	padding			: .3rem .9rem;
+	font-size		: .9rem;
+	cursor			: pointer;
+}
+nav button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+#link		{ font-size: .8rem; color: var(--done); }
+#link.down	{ color: var(--late); }
+
+main {
+	flex			: 1;
+	overflow-y		: auto;
+	display			: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap				: .8rem;
+	padding			: .8rem;
+	align-content	: start;
+}
+
+.ticket {
+	background		: var(--card);
+	border			: 2px solid var(--line);
+	border-radius	: 10px;
+	overflow		: hidden;
+	display			: flex;
+	flex-direction	: column;
+}
+.ticket.cooking	{ border-color: var(--cooking); }
+.ticket.warn	{ border-color: var(--warn); }
+.ticket.late	{ border-color: var(--late); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { border-color: var(--card); } }
+
+.head {
+	display			: flex;
+	align-items		: baseline;
+	gap				: .6rem;
+	padding			: .6rem .8rem;
+	border-bottom	: 1px solid var(--line);
+}
+.table		{ font-size: 1.7rem; font-weight: 700; }
+.slip		{ font-size: .8rem; color: var(--dim); }
+.clock		{ margin-left: auto; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+.warn .clock{ color: var(--warn); }
+.late .clock{ color: var(--late); }
+
+ul { list-style: none; padding: 0; flex: 1; }
+li {
+	display			: flex;
+	align-items		: center;
+	gap				: .6rem;
+	padding			: .55rem .8rem;
+	border-bottom	: 1px solid var(--line);
+	cursor			: pointer;
+	font-size		: 1.15rem;
+}
+li:last-child			{ border-bottom: 0; }
+li .qty					{ min-width: 2.2rem; font-weight: 700; font-size: 1.3rem; }
+li .opt					{ color: var(--cooking); font-size: .85rem; }
+li .note				{ color: var(--warn); font-size: .85rem; }
+li[data-state="done"]	{ color: var(--dim); text-decoration: line-through; }
+li[data-state="void"]	{ color: var(--late); text-decoration: line-through; opacity: .55; cursor: default; }
+
+.foot { padding: .5rem .8rem; }
+.foot button {
+	width			: 100%;
+	padding			: .6rem;
+	font-size		: 1rem;
+	background		: var(--done);
+	color			: #fff;
+	border			: 0;
+	border-radius	: 6px;
+	cursor			: pointer;
+}
+
+.empty { grid-column: 1/-1; text-align: center; color: var(--dim); padding: 4rem 0; }
