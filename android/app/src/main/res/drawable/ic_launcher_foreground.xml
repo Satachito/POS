@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	An order slip with a torn bottom edge. Kept inside the central 66dp so the adaptive
+	icon's mask cannot clip it, whatever shape the launcher crops to.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+	android:width="108dp"
+	android:height="108dp"
+	android:viewportWidth="108"
+	android:viewportHeight="108">
+
+	<path
+		android:fillColor="#FFFFFF"
+		android:pathData="M36,30 H72 V68 L67.5,74 L63,68 L58.5,74 L54,68 L49.5,74 L45,68 L40.5,74 L36,68 Z" />
+
+	<path
+		android:fillColor="#1D4ED8"
+		android:pathData="M42,39 H66 V43 H42 Z M42,48 H66 V52 H42 Z M42,57 H55 V61 H42 Z" />
+</vector>
