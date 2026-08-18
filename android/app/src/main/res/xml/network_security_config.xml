@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+	The Pi serves plain HTTP on the store's own VLAN. Cleartext is confined to private
+	address space so the app cannot be talked into sending an order over the open internet.
+-->
+<network-security-config>
+	<domain-config cleartextTrafficPermitted="true">
+		<domain includeSubdomains="true">10.0.2.2</domain>
+		<domain includeSubdomains="true">localhost</domain>
+		<domain includeSubdomains="true">pos.local</domain>
+		<domain includeSubdomains="true">192.168.0.0</domain>
+	</domain-config>
+	<base-config cleartextTrafficPermitted="true" />
+</network-security-config>

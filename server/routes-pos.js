@@ -264,14 +264,16 @@ POSRoutes = pos => {
 	Tables = () => [ ...pos.tables.all() ].sort( ( a, b ) => ( a.order ?? 0 ) - ( b.order ?? 0 ) || String( a.code ).localeCompare( b.code ) ).map( table => {
 		const
 		order_id = index.openOf.get( table.code )
-		if ( !order_id ) return { ...table, order: null }
+		//	The open order goes in `open`, not `order`: a table record already carries `order`
+		//	as its display position, and spreading a second meaning over it loses the first.
+		if ( !order_id ) return { ...table, open: null }
 
 		const
 		order	= pos.orders.get( order_id )
 	,	tickets	= TicketsOf( pos, index, order_id )
 		return {
 			...table
-		,	order: {
+		,	open: {
 				order_id
 			,	number		: order.number
 			,	guests		: order.guests
@@ -473,6 +475,10 @@ POSRoutes = pos => {
 			guests		+= o.guests
 			for ( const _ of o.bill.tax ) perRate.set( _.rate, ( perRate.get( _.rate ) ?? 0 ) + _.amount )
 			for ( const _ of o.bill.payments ) byMethod[ _.method ] = ( byMethod[ _.method ] ?? 0 ) + _.amount
+			//	Payments record what was handed over, so a cash bill carries the tendered note, not
+			//	the takings. Change comes back out of the cash drawer -- subtract it, or every day
+			//	that took a 5000 note for a 2700 bill reports 2300 yen that is not there.
+			if ( o.bill.change ) byMethod.cash = ( byMethod.cash ?? 0 ) - o.bill.change
 		}
 
 		return {

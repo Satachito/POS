@@ -131,7 +131,7 @@ because `EventSource` cannot set headers).
 | `GET /pos/menu?v=hash` | menu snapshot; `v` is a content hash, so an unchanged menu costs 40 bytes |
 | `POST /pos/menu/publish` | broadcast that the menu moved, after an admin edit |
 | `POST /pos/item/{code}/soldout` | flip one item — a floor route, not admin-only |
-| `GET /pos/tables` | all 16 tables with their open order and running total |
+| `GET /pos/tables` | all 16 tables; the open order and running total arrive in `open` |
 | `POST /pos/order` | open a table — idempotent on `order_id` |
 | `GET /pos/order/{order_id}` | order, tickets, running bill |
 | `POST /pos/order/{order_id}/close` | settle — an order closes once, and that is its idempotency |
@@ -196,15 +196,37 @@ of appends before the first table can be opened in the morning. It refuses to ru
 server is up: a write landing between the read and the truncate would be lost, and that write
 is somebody's order.
 
-## For the Android side
+## The handy — `android/`
 
-- Cache the menu locally; check `/pos/menu?v=` on launch and re-check periodically.
-- Persist orders in Room **before** sending. Pressing 送信 saves and advances the screen
-  immediately; the network is a background concern. Show `未送信 N件` in the corner.
-- Never drop a queued ticket until a `2xx` comes back. Retry the identical body forever —
-  that is what the idempotency keys are for.
-- Screen-pin the app (Device Owner if the fleet allows) so nobody wanders to the home screen.
-- Read table numbers from NFC tags or QR on the tables rather than typing them.
+Kotlin + Compose, minSdk 26, one Gradle module. `cd android && ./gradlew assembleDebug`
+(JDK 17, `local.properties` pointing at the SDK).
+
+```
+Models.kt      wire shapes, unknown keys ignored
+Api.kt         OkHttp; a 4xx is a Rejected, anything else is worth retrying
+Db.kt          Room: the outbox, and a cache for the menu and table list
+Repo.kt        everything the screens read, every write they make, and the sender loop
+*Screen.kt     settings / tables / order / bill / pending
+```
+
+**The outbox is the point of the app.** Pressing 送信 writes one row and returns — the cart
+clears, the screen moves on, and the network is somebody else's problem. A coroutine drains
+the table in id order, so an order is opened before the tickets that belong to it, and every
+row carries the id the server dedupes on. Verified on the emulator: with the radio off, an
+order is taken, `未送信 1` appears in the corner, and the ticket lands the moment the radio
+comes back, without anyone touching the app.
+
+Failures are told apart, because the two kinds want opposite handling. A network error backs
+off and retries forever — the order is not lost, it is early. A 4xx is the server refusing:
+the row is parked with its reason and shown on the 未送信 screen with 再送 / 破棄, because a
+refusal a person never sees is worse than one they can act on.
+
+The handy never computes money it sends. It posts item codes, quantities and option codes;
+every price and total on screen is what the server resolved, and the settle button is a
+convenience over an amount the server recomputes and can refuse.
+
+Still to do on the device: screen pinning (Device Owner if the fleet allows), NFC or QR on
+the tables instead of tapping a code, and a release signing config.
 
 ## Not built yet
 
@@ -212,5 +234,7 @@ is somebody's order.
   printer yet.
 - **Table moves and bill splitting.** `order.table` is fixed at open, and one order settles
   as one bill.
+- **Settling from the counter.** The handy can settle; the counter PC cannot yet. A register
+  page under `apps/` over the same API is the missing half.
 - **Yearly rotation.** Every record stays in memory. At ~300 tickets a day that is fine for
   years, but `tickets.jsons` should eventually roll to `tickets-2026.jsons` at year end.
