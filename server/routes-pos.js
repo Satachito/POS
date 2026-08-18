@@ -8,6 +8,8 @@
 //	rates and every total are resolved and computed here, from the menu clusters.
 //
 //		GET   /pos/menu[?v=hash]            menu snapshot, versioned by content hash
+//		POST  /pos/menu/publish             tell every listener the menu moved
+//		POST  /pos/item/{code}/soldout      flip one item, from the floor or the counter
 //		GET   /pos/tables                   every table with its open order
 //		POST  /pos/order                    open a table              (idempotent: order_id)
 //		GET   /pos/order/{order_id}         the order, its tickets and the running bill
@@ -230,7 +232,36 @@ POSRoutes = pos => {
 	}
 
 	const
-	Tables = () => [ ...pos.tables.all() ].map( table => {
+	Publish = async () => {
+		const
+		menu = await Menu()
+		Broadcast( 'menu', { version: menu.version } )
+		return { version: menu.version }
+	}
+
+	//	Sold out is the one menu edit that happens mid-service, and it is the floor that
+	//	notices -- so it is a POS route the handies can call, not an admin-only one, and it
+	//	tells everyone at once rather than waiting for the next menu poll.
+	const
+	SoldOut = async ( Q, code ) => {
+		const
+		body = await BodyAsJSON( Q )
+	,	item = pos.items.get( code )
+		if ( !item ) Fail( 404, `No such item: ${ code }` )
+
+		item.sold_out = !!body.sold_out
+		pos.items.replace( code, item )
+
+		const
+		menu = await Menu()
+		Broadcast( 'menu', { version: menu.version, item: code, sold_out: item.sold_out } )
+		return item
+	}
+
+	//	Sorted, not in cluster order: put() removes and re-adds a record, so an edited table
+	//	would otherwise jump to the end of every handy's list.
+	const
+	Tables = () => [ ...pos.tables.all() ].sort( ( a, b ) => ( a.order ?? 0 ) - ( b.order ?? 0 ) || String( a.code ).localeCompare( b.code ) ).map( table => {
 		const
 		order_id = index.openOf.get( table.code )
 		if ( !order_id ) return { ...table, order: null }
@@ -467,12 +498,18 @@ POSRoutes = pos => {
 			try {
 				switch ( head ) {
 				case 'menu': {
+					if ( a === 'publish' )	return POST ? SendJSONable( S, await Publish() ) : _405( S )
+					if ( a )					return _404( S )
 					if ( !GET ) return _405( S )
 					const
 					menu = await Menu()
 					//	Unchanged? Say so in 40 bytes instead of resending the whole card.
 					return SendJSONable( S, QueryOf( Q ).get( 'v' ) === menu.version ? { version: menu.version, changed: false } : { ...menu, changed: true } )
 				}
+				case 'item':
+					if ( a && b === 'soldout' ) return POST ? SendJSONable( S, await SoldOut( Q, a ) ) : _405( S )
+					return _404( S )
+
 				case 'tables':
 					return GET ? SendJSONable( S, Tables() ) : _405( S )
 

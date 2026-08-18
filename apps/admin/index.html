@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>メニュー管理</title>
+<link rel="stylesheet" href="/apps/admin/style.css">
+</head>
+<body>
+<header>
+	<h1>メニュー管理</h1>
+	<nav id="tabs">
+		<button data-tab="items" aria-pressed="true">商品</button>
+		<button data-tab="categories" aria-pressed="false">カテゴリ</button>
+		<button data-tab="tables" aria-pressed="false">卓</button>
+	</nav>
+	<span id="version" title="端末はこのハッシュを見てメニューの更新を検知します"></span>
+	<span id="status"></span>
+</header>
+
+<main>
+	<section id="items" class="tab">
+		<div class="list">
+			<div class="listhead">
+				<button id="new">＋ 新規</button>
+				<label><input type="checkbox" id="onlysold"> 売切のみ</label>
+			</div>
+			<div id="itemlist"></div>
+		</div>
+		<form id="detail" class="detail" hidden></form>
+	</section>
+
+	<section id="categories" class="tab" hidden></section>
+	<section id="tables" class="tab" hidden></section>
+</main>
+
+<script type="module" src="/apps/admin/main.js"></script>
+</body>
+</html>

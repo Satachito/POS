@@ -129,6 +129,8 @@ because `EventSource` cannot set headers).
 | | |
 |---|---|
 | `GET /pos/menu?v=hash` | menu snapshot; `v` is a content hash, so an unchanged menu costs 40 bytes |
+| `POST /pos/menu/publish` | broadcast that the menu moved, after an admin edit |
+| `POST /pos/item/{code}/soldout` | flip one item — a floor route, not admin-only |
 | `GET /pos/tables` | all 16 tables with their open order and running total |
 | `POST /pos/order` | open a table — idempotent on `order_id` |
 | `GET /pos/order/{order_id}` | order, tickets, running bill |
@@ -141,8 +143,27 @@ because `EventSource` cannot set headers).
 | `GET /pos/events` | SSE: `ticket` / `kds` / `order` |
 | `GET /pos/health` | counts, for the monitor |
 
-`/db/pos/...` is JSONables' generic CRUD — the menu-editing surface. It is unauthenticated by
-design upstream, so `server/main.js` keeps it on the Pi itself unless `ADMIN_TOKEN` is set.
+`/db/pos/...` is JSONables' generic CRUD — what the menu admin writes through. It is
+unauthenticated by design upstream, so `server/main.js` keeps it on the Pi itself unless
+`ADMIN_TOKEN` is set. Admin is a superset of floor: the counter PC that just edited the menu
+also has to be able to tell the handies it moved.
+
+### Menu admin
+
+`/apps/admin/` — items, categories and tables, for the counter PC. Writes go through
+`/db/pos/`, which mutates the same cluster objects the POS API reads from, so an edit is live
+for the floor immediately with no restart; the page then calls `/pos/menu/publish` so the
+terminals hear about it within the second instead of at their next poll.
+
+**Sold out is the one edit that happens mid-service**, and it is the floor that notices — so
+it is a POS route (`/pos/item/{code}/soldout`) the handies can call, not an admin-only one,
+and it broadcasts on write. `POST /pos/ticket` refuses a sold-out item with a `409` listing
+the codes, so a stale menu cache on a handy cannot sell what the kitchen has run out of. The
+admin page follows the same broadcast, so the counter never shows a stale list either.
+
+Item codes are not editable after creation. Nothing breaks if one changes — tickets copy the
+name and price at the time of the order, so past bills are unaffected — but the field is kept
+read-only to make that a deliberate act rather than a typo.
 
 ### Two rules the handy lives by
 
@@ -187,8 +208,6 @@ is somebody's order.
 
 ## Not built yet
 
-- **Menu admin UI.** Edit `data/pos/items.jsons` directly (it is designed to be read by a
-  human) or drive `/db/pos/items/` from a page like JSONables' own `apps/sql`.
 - **Receipt printing.** The bill is computed and stored; nothing renders it to an ESC/POS
   printer yet.
 - **Table moves and bill splitting.** `order.table` is fixed at open, and one order settles

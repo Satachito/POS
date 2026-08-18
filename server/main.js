@@ -65,14 +65,16 @@ Presented = Q =>
 const
 Guard = ( Allowed, handler ) => async ( Q, S, rest ) => Allowed( Q ) ? handler( Q, S, rest ) : _403( S )
 
-const
-Floor = Q => Local( Q ) || !TOKEN || Presented( Q ) === TOKEN
-
 //	Generic CRUD is unauthenticated by design in JSONables: full POST/PUT/DELETE over every
 //	cluster. That is right for a laptop tool and wrong on a store network, so it stays on the
 //	Pi itself unless an ADMIN_TOKEN is deliberately set for a counter PC.
 const
 Admin = Q => Local( Q ) || ( !!ADMIN_TOKEN && Presented( Q ) === ADMIN_TOKEN )
+
+//	Admin is a superset of floor: the counter PC that just edited the menu also has to be
+//	able to tell the handies it moved.
+const
+Floor = Q => Local( Q ) || !TOKEN || Presented( Q ) === TOKEN || Admin( Q )
 
 //	----------------------------------------------------------------- serve
 
