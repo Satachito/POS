@@ -1,6 +1,7 @@
 package store.pos.handy
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,12 @@ class MainActivity : ComponentActivity() {
 
 	override fun onCreate( savedInstanceState: Bundle? ) {
 		super.onCreate( savedInstanceState )
+
+		//	A handy is held, not pocketed: the screen going dark between taking one table's
+		//	order and the next is a wake-and-unlock in the middle of service. The manifest has
+		//	no attribute for this -- android:keepScreenOn on <activity> is silently ignored --
+		//	so it has to be a window flag.
+		window.addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON )
 
 		val
 		repo = ( application as App ).repo
