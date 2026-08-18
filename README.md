@@ -3,7 +3,8 @@
 Order-taking and settlement for one restaurant: 40 seats over 16 tables, three Android
 handies, one kitchen display, one Raspberry Pi in the back.
 
-Storage is [JSONables](../JSONables) — every record is one line of JSON in `data/pos/`.
+Storage is [JSONables](JSONables), vendored as a submodule — every record is one line of
+JSON in `data/pos/`.
 
 ```
        [業務用AP] ──(Wi-Fi)── [Android ハンディ x3 (+予備1)]
@@ -22,9 +23,25 @@ Storage is [JSONables](../JSONables) — every record is one line of JSON in `da
 ## Running
 
 ```
+git clone --recurse-submodules <this repo>
+npm install
 npm start                                  # http://localhost:8080/apps/kds/
+
 POS_TOKEN=xxxx ADMIN_TOKEN=yyyy npm start  # what the Pi actually runs
 ```
+
+`--recurse-submodules` is not optional: JSONables is a submodule, and it has SAT nested
+inside it. A plain clone gives an empty `JSONables/` and a server that will not start. On a
+clone that already went wrong, `git submodule update --init --recursive` fixes it.
+
+JSONables is pinned to an exact commit. The POS depends on how `cluster.js` replays a
+truncated write log, and that dependency must not be able to shift under a running store
+because the library was pulled for unrelated work — upgrading it is a commit here, on
+purpose. `server/jsonables.js` is the only file that names the path.
+
+`cookie` is declared in this `package.json` even though nothing here imports it: JSONables'
+`Bullet.js` needs it, its own `node_modules` is not committed, and Node resolves upward from
+`JSONables/SAT/` into the POS root. One `npm install` at the top covers both.
 
 `deploy/pos.service` is the systemd unit; `deploy/close.sh` is the close-of-business ritual.
 

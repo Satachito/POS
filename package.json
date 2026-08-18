@@ -6,4 +6,7 @@
 		"start": "node server/main.js"
 	,	"compact": "node tools/compact.js"
 	}
+,	"dependencies": {
+		"cookie": "^1.0.2"
+	}
 }

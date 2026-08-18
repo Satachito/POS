@@ -1,0 +1,3 @@
+[submodule "JSONables"]
+	path = JSONables
+	url = https://github.com/Satachito/JSONables.git
