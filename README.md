@@ -45,6 +45,41 @@ purpose. `server/jsonables.js` is the only file that names the path.
 
 `deploy/pos.service` is the systemd unit; `deploy/close.sh` is the close-of-business ritual.
 
+## Node
+
+**Node 26**, on the development machine and on the Pi alike — `engines` in `package.json`,
+`.node-version` for the version managers, and `engine-strict=true` in `.npmrc` so a mismatched
+runtime fails at `npm install` rather than at 18:00 on a Friday.
+
+On the Pi, install it from NodeSource so the binary lands at `/usr/bin/node`, which is what
+the systemd unit calls:
+
+```bash
+uname -m                                # must print aarch64
+curl -fsSL https://deb.nodesource.com/setup_26.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v && node -p process.arch         # v26.x / arm64
+```
+
+`setup_26.x` pins the repository to the 26 line: `apt upgrade` brings patches, never a major
+bump. Moving to 28 means running the setup script again — a deliberate act, on a closed day.
+
+Two things to avoid:
+
+- **The Debian repository's `nodejs`.** Bookworm ships Node 18, which is end-of-life.
+- **nvm, for the service.** It is a shell function, and systemd has no shell profile. The unit
+  would need `/home/pos/.nvm/versions/node/v26.7.0/bin/node` — a path containing a version
+  number, which stops existing the moment Node is upgraded. The service then fails to start
+  and nobody finds out until the store opens. nvm on a laptop is fine.
+
+Upgrades are cheap here because there is exactly one dependency (`cookie`) and it is pure
+JavaScript. No native modules means no ABI rebuild to break, no `build-essential` on the Pi,
+and an `npm install` that finishes in seconds — a side benefit of storing data in JSONables
+rather than something with a compiled driver.
+
+Node 26 follows the usual cadence, so it is on the Current line until it goes LTS in October
+2026. Worth knowing if the store opens before then; confirm against nodejs.org.
+
 ## Why JSONables and not SQLite
 
 Three properties of this store matter more than query power, and it has all three:
