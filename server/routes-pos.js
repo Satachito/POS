@@ -110,9 +110,10 @@ BuildIndex = pos => {
 
 //	----------------------------------------------------------------- menu
 
-//	What a bill belongs to. An izakaya bill belongs to the table it was opened on and the
-//	table holds one at a time; a snack's belongs to the person, who may move seats, sit at
-//	the counter next to another tab, or have no seat at all.
+//	What a bill belongs to, and what lands on it before anybody orders anything. An izakaya
+//	bill belongs to the table it was opened on and the table holds one at a time; a snack's
+//	belongs to the person, who may move seats, sit at the counter next to another tab, or
+//	have no seat at all -- and who is charged for sitting down at all, via auto_items.
 const
 StoreOf = pos => ( { order_by: 'table', ...( pos.config.get( 'store' ) ?? {} ) } )
 
@@ -353,6 +354,41 @@ POSRoutes = pos => {
 		}
 		pos.orders.insert( order.order_id, order )
 		index.open.add( order.order_id )
+
+		//	A snack bills for sitting down, so the set charge goes on the tab the moment the tab
+		//	exists rather than waiting for somebody to remember it at settlement. One per head.
+		//
+		//	The ticket id is derived from the order, so a retried open cannot charge it twice --
+		//	the same insert-if-absent that protects a repeated 送信 protects this.
+		const
+		automatic = ( StoreOf( pos ).auto_items ?? [] )
+		.filter( _ => pos.items.get( _ ) && !pos.items.get( _ ).sold_out )
+
+		if ( automatic.length ) {
+			const
+			lines = ResolveLines( pos, automatic.map( item => ( { item, qty: order.guests } ) ) )
+
+			//	Nothing to prepare: it is an accounting line, so it is born served and never
+			//	reaches the kitchen display.
+			for ( const line of lines ) line.state = 'done'
+
+			const
+			ticket = {
+				ticket_id	: `auto-${ order.order_id }`
+			,	order_id	: order.order_id
+			,	number		: order.number
+			,	customer	: order.customer
+			,	table		: order.table
+			,	terminal	: order.terminal
+			,	seq			: 1
+			,	at			: order.opened_at
+			,	state		: 'done'
+			,	lines
+			}
+			pos.tickets.insert( ticket.ticket_id, ticket )
+			if ( !index.byOrder.has( order.order_id ) ) index.byOrder.set( order.order_id, [] )
+			index.byOrder.get( order.order_id ).push( ticket.ticket_id )
+		}
 
 		Broadcast( 'order', { action: 'open', order } )
 		return OrderView( pos, index, order )

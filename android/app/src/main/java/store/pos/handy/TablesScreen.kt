@@ -87,7 +87,7 @@ fun TablesScreen(
 						Text( open.number, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant )
 						Spacer( Modifier.weight( 1f ) )
 						Text( yen( open.total ), fontWeight = FontWeight.SemiBold, maxLines = 1 )
-						Text( "${ open.guests }名・${ elapsed( open.opened_at ) }", style = MaterialTheme.typography.bodySmall, color = Busy, maxLines = 1 )
+						Text( "${ open.guests }名・${ elapsedShort( open.opened_at ) }", style = MaterialTheme.typography.bodySmall, color = Busy, maxLines = 1 )
 					}
 				}
 			}

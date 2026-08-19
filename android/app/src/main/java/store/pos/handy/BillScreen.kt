@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,13 +38,26 @@ fun BillScreen( repo: Repo, label: String, orderId: String, onBack: () -> Unit, 
 	LaunchedEffect( orderId ) { reload() }
 
 	val
+	cash	= method == "cash"
+	val
 	off		= discount.toIntOrNull() ?: 0
 	val
 	total	= ( ( order?.bill?.subtotal ?: 0 ) - off ).coerceAtLeast( 0 )
+
+	//	Cash is handed over, so the amount has to be typed and the change worked out. Card and
+	//	QR are not: the amount is the total, and asking somebody to key it in a second time can
+	//	only introduce an error.
 	val
-	paid	= received.toIntOrNull() ?: 0
+	paid	= if ( cash ) received.toIntOrNull() ?: 0 else total
 	val
 	change	= ( paid - total ).coerceAtLeast( 0 )
+
+	//	The notes somebody actually hands over for this total.
+	val
+	notes = remember( total ) {
+		( listOf( total ) + listOf( 1000, 5000, 10000 ).map { step -> ( total + step - 1 ) / step * step } )
+		.distinct().filter { it >= total && it > 0 }.sorted().take( 4 )
+	}
 
 	Scaffold(
 		topBar = {
@@ -99,20 +113,30 @@ fun BillScreen( repo: Repo, label: String, orderId: String, onBack: () -> Unit, 
 						,	keyboardOptions	= KeyboardOptions( keyboardType = KeyboardType.Number )
 						,	modifier		= Modifier.weight( 1f )
 						)
-						OutlinedTextField(
+						if ( cash ) OutlinedTextField(
 							received, { received = it.filter { c -> c.isDigit() } }
-						,	label			= { Text( if ( method == "cash" ) "預り" else "受領" ) }
+						,	label			= { Text( "預り" ) }
 						,	singleLine		= true
 						,	keyboardOptions	= KeyboardOptions( keyboardType = KeyboardType.Number )
 						,	modifier		= Modifier.weight( 1f )
-						)
+						) else Spacer( Modifier.weight( 1f ) )
+					}
+
+					//	One tap for the note that was actually handed over, which is the whole of
+					//	this interaction most nights.
+					if ( cash ) Row( Modifier.horizontalScroll( rememberScrollState() ), horizontalArrangement = Arrangement.spacedBy( 8.dp ) ) {
+						notes.forEach { amount ->
+							OutlinedButton( { received = amount.toString() } ) {
+								Text( if ( amount == total ) "ちょうど" else yen( amount ) )
+							}
+						}
 					}
 
 					Row {
 						Text( "合計", Modifier.weight( 1f ), fontSize = 18.sp )
 						Text( yen( total ), fontSize = 24.sp, fontWeight = FontWeight.Bold )
 					}
-					if ( method == "cash" && paid > 0 ) Row {
+					if ( cash && paid > 0 ) Row {
 						Text( "釣銭", Modifier.weight( 1f ), color = MaterialTheme.colorScheme.onSurfaceVariant )
 						Text( yen( change ), fontSize = 20.sp, color = Busy, fontWeight = FontWeight.SemiBold )
 					}
@@ -130,6 +154,16 @@ fun BillScreen( repo: Repo, label: String, orderId: String, onBack: () -> Unit, 
 							}
 						}
 					) { Text( "会計する", fontSize = 18.sp ) }
+
+					//	A greyed-out button that does not say why is a dead end. It only ever has one
+					//	reason to be grey, so say it.
+					if ( order != null && paid < total ) Text(
+						"預り金を入力してください"
+					,	style		= MaterialTheme.typography.bodySmall
+					,	color		= Warn
+					,	modifier	= Modifier.fillMaxWidth()
+					,	textAlign	= TextAlign.Center
+					)
 				}
 			}
 		}
