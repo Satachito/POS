@@ -510,17 +510,18 @@ POSRoutes = pos => {
 		if ( !payments.length ) Fail( 400, 'payments is empty' )
 
 		//	Recomputed here from the tickets. Whatever total the handy showed is a display.
+		//
+		//	Payments record what was taken by each method, and they have to add up to the bill
+		//	exactly. Cash tendered and change given are counted in the drawer, not here.
 		const
 		bill	= Bill( tickets, Number( body.discount ) || 0 )
 	,	paid	= payments.reduce( ( n, _ ) => n + _.amount, 0 )
-		if ( paid < bill.total ) Fail( 400, `Short payment: ${ paid } < ${ bill.total }`, bill )
+		if ( paid !== bill.total ) Fail( 400, `支払いが合いません: ${ paid } ≠ ${ bill.total }`, bill )
 
 		order.closed_at	= Now()
 		order.bill		= {
 			...bill
 		,	payments
-		,	paid
-		,	change		: paid - bill.total
 		,	note		: String( body.note ?? '' )
 		,	terminal	: String( body.terminal ?? '' )
 		}
@@ -549,9 +550,8 @@ POSRoutes = pos => {
 			guests		+= o.guests
 			for ( const _ of o.bill.tax ) perRate.set( _.rate, ( perRate.get( _.rate ) ?? 0 ) + _.amount )
 			for ( const _ of o.bill.payments ) byMethod[ _.method ] = ( byMethod[ _.method ] ?? 0 ) + _.amount
-			//	Payments record what was handed over, so a cash bill carries the tendered note, not
-			//	the takings. Change comes back out of the cash drawer -- subtract it, or every day
-			//	that took a 5000 note for a 2700 bill reports 2300 yen that is not there.
+			//	Older bills recorded the note tendered rather than the takings; their change has to
+			//	come back out or the day reports cash that was handed straight back.
 			if ( o.bill.change ) byMethod.cash = ( byMethod.cash ?? 0 ) - o.bill.change
 		}
 
