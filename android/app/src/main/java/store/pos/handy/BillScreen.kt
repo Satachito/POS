@@ -3,8 +3,6 @@ package store.pos.handy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,8 +15,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import kotlinx.coroutines.launch
 
-private val METHODS = listOf( "cash" to "現金", "card" to "カード", "qr" to "QR" )
-
 @OptIn( ExperimentalMaterial3Api::class )
 @Composable
 fun BillScreen( repo: Repo, label: String, orderId: String, onBack: () -> Unit, onDone: () -> Unit ) {
@@ -26,7 +22,6 @@ fun BillScreen( repo: Repo, label: String, orderId: String, onBack: () -> Unit, 
 	val
 	scope = rememberCoroutineScope()
 	var order		by remember { mutableStateOf< OrderView? >( null ) }
-	var method		by remember { mutableStateOf( "cash" ) }
 	var discount	by remember { mutableStateOf( "" ) }
 	var voiding		by remember { mutableStateOf< Pair< Ticket, TicketLine >? >( null ) }
 
@@ -85,10 +80,6 @@ fun BillScreen( repo: Repo, label: String, orderId: String, onBack: () -> Unit, 
 			Surface( tonalElevation = 3.dp ) {
 				Column( Modifier.padding( 14.dp ), verticalArrangement = Arrangement.spacedBy( 10.dp ) ) {
 
-					Row( horizontalArrangement = Arrangement.spacedBy( 8.dp ), modifier = Modifier.horizontalScroll( rememberScrollState() ) ) {
-						METHODS.forEach { ( code, label ) -> FilterChip( method == code, { method = code }, { Text( label ) } ) }
-					}
-
 					Row( horizontalArrangement = Arrangement.spacedBy( 10.dp ) ) {
 						OutlinedTextField(
 							discount, { discount = it.filter { c -> c.isDigit() } }
@@ -112,7 +103,7 @@ fun BillScreen( repo: Repo, label: String, orderId: String, onBack: () -> Unit, 
 					,	modifier	= Modifier.fillMaxWidth().height( 54.dp )
 					,	onClick		= {
 							scope.launch {
-								repo.close( orderId, listOf( Payment( method, total ) ), off, "$label ${ order?.number ?: "" }" )
+								repo.close( orderId, off, "$label ${ order?.number ?: "" }" )
 								repo.say( "$label 会計 ${ yen( total ) }" )
 								onDone()
 							}
