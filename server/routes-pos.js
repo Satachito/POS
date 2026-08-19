@@ -504,24 +504,19 @@ POSRoutes = pos => {
 		if ( order.closed_at ) return OrderView( pos, index, order )
 
 		const
-		body		= await BodyAsJSON( Q )
-	,	tickets		= TicketsOf( pos, index, order_id )
-	,	payments	= ( body.payments ?? [] ).map( _ => ( { method: String( _.method ), amount: Number( _.amount ) || 0 } ) )
-		if ( !payments.length ) Fail( 400, 'payments is empty' )
+		body	= await BodyAsJSON( Q )
+	,	tickets	= TicketsOf( pos, index, order_id )
 
 		//	Recomputed here from the tickets. Whatever total the handy showed is a display.
 		//
-		//	Payments record what was taken by each method, and they have to add up to the bill
-		//	exactly. Cash tendered and change given are counted in the drawer, not here.
+		//	Settling records that the bill was settled and for how much. How the money arrived is
+		//	not tracked -- reconciling cash against card belongs to whatever counts the drawer.
 		const
-		bill	= Bill( tickets, Number( body.discount ) || 0 )
-	,	paid	= payments.reduce( ( n, _ ) => n + _.amount, 0 )
-		if ( paid !== bill.total ) Fail( 400, `支払いが合いません: ${ paid } ≠ ${ bill.total }`, bill )
+		bill = Bill( tickets, Number( body.discount ) || 0 )
 
 		order.closed_at	= Now()
 		order.bill		= {
 			...bill
-		,	payments
 		,	note		: String( body.note ?? '' )
 		,	terminal	: String( body.terminal ?? '' )
 		}
@@ -538,8 +533,7 @@ POSRoutes = pos => {
 		orders = [ ...pos.orders.all() ].filter( _ => _.closed_at?.startsWith( date ) )
 
 		const
-		perRate	= new Map()
-	,	byMethod	= {}
+		perRate = new Map()
 		let
 		subtotal = 0, discount = 0, total = 0, guests = 0
 
@@ -549,10 +543,6 @@ POSRoutes = pos => {
 			total		+= o.bill.total
 			guests		+= o.guests
 			for ( const _ of o.bill.tax ) perRate.set( _.rate, ( perRate.get( _.rate ) ?? 0 ) + _.amount )
-			for ( const _ of o.bill.payments ) byMethod[ _.method ] = ( byMethod[ _.method ] ?? 0 ) + _.amount
-			//	Older bills recorded the note tendered rather than the takings; their change has to
-			//	come back out or the day reports cash that was handed straight back.
-			if ( o.bill.change ) byMethod.cash = ( byMethod.cash ?? 0 ) - o.bill.change
 		}
 
 		return {
@@ -564,7 +554,6 @@ POSRoutes = pos => {
 		,	total
 		,	per_guest	: guests ? Math.round( total / guests ) : 0
 		,	tax			: [ ...perRate ].map( ( [ rate, amount ] ) => ( { rate, amount } ) ).sort( ( a, b ) => b.rate - a.rate )
-		,	by_method	: byMethod
 		}
 	}
 
