@@ -41,11 +41,25 @@ fun minutesSince( at: String ): Int = runCatching {
 	( ( System.currentTimeMillis() - java.time.OffsetDateTime.parse( at ).toInstant().toEpochMilli() ) / 60000 ).toInt()
 }.getOrDefault( 0 )
 
-//	Minutes are what the floor thinks in, until they are not: a table left open overnight
-//	reads as "1073分", which nobody parses at a glance. Past two hours, switch to hours.
+//	How long they have been sitting. In a store that charges by the hour this is the billing
+//	clock, not a curiosity: at 1時間52分 somebody should be asking about the extension, and
+//	"2時間" -- which covers everything from 120 to 179 minutes -- loses exactly that. Minutes
+//	are dropped only past a day, where a bill has plainly been left open overnight and the
+//	number has stopped meaning anything anyway.
 fun elapsed( at: String ): String {
 	val
 	m = minutesSince( at )
-	//	Past two hours the minutes stop carrying information and start costing width.
+	return when {
+		m < 60		-> "${ m }分"
+		m < 24 * 60	-> "${ m / 60 }時間${ m % 60 }分"
+		else		-> "${ m / 60 }時間"
+	}
+}
+
+//	The table card has room for about six characters, so it trades the precision away. The
+//	bill list, where the clock actually matters, uses the full form.
+fun elapsedShort( at: String ): String {
+	val
+	m = minutesSince( at )
 	return if ( m < 120 ) "${ m }分" else "${ m / 60 }時間"
 }
