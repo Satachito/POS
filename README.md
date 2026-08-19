@@ -6,6 +6,20 @@ handies, one kitchen display, one Raspberry Pi in the back.
 Storage is [JSONables](JSONables), vendored as a submodule — every record is one line of
 JSON in `data/pos/`.
 
+**This branch is the code.** It carries the schema (`data/pos/*.meta.json`) and no records.
+A store lives on its own branch — `izakaya`, `snack` — which adds its menu, its floor plan,
+its `config.jsons`, and, night after night, its takings:
+
+```
+main ──┬── izakaya    卓に伝票が属する店
+       └── snack      人に伝票が属する店
+```
+
+Each Pi tracks its store's branch, so `git pull` brings the code and only that store's data,
+and `deploy/close.sh` commits the day's records where they belong instead of onto main. Fix
+the server on `main`, then `git checkout izakaya && git merge main` — the data files are not
+on main at all, so a merge never touches them and never conflicts.
+
 ```
        [業務用AP] ──(Wi-Fi)── [Android ハンディ x3 (+予備1)]
             │                  Room に送信キュー / メニューキャッシュ
@@ -98,14 +112,17 @@ emulates: records nest instead of being normalised, and one ticket is one write.
 ## Data model
 
 ```
-data/pos/
-  tables.jsons       16 tables / 40 seats   keyFields: ["code"]      master, in git
-  categories.jsons                          keyFields: ["code"]      master, in git
-  items.jsons        menu, prices, options  keyFields: ["code"]      master, in git
-  config.jsons       store settings         keyFields: ["key"]       master, in git
-  orders.jsons       伝票 = one settlement   keyFields: ["order_id"]  mutable
-  tickets.jsons      キッチン伝票            keyFields: ["ticket_id"] content immutable
+data/pos/                                                            on main   on a store branch
+  config.meta.json   store settings         keyFields: ["key"]       schema    config.jsons
+  tables.meta.json   floor plan             keyFields: ["code"]      schema    tables.jsons
+  categories.meta.json                      keyFields: ["code"]      schema    categories.jsons
+  items.meta.json    menu, prices, options  keyFields: ["code"]      schema    items.jsons
+  orders.meta.json   伝票 = one settlement   keyFields: ["order_id"]  schema    orders.jsons
+  tickets.meta.json  キッチン伝票            keyFields: ["ticket_id"] schema    tickets.jsons
 ```
+
+The server boots on `main` with no records at all — every `.jsons` is optional, and a
+missing menu is an empty menu, not a crash.
 
 ### Who a bill belongs to
 
