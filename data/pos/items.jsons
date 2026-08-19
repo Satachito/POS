@@ -1,0 +1,18 @@
+{"code":"S-01","category":"S","name":"セット料金 60分","price":3000,"tax":10,"station":"bar","sold_out":false,"order":10,"options":[]}
+{"code":"S-02","category":"S","name":"延長 30分","price":1500,"tax":10,"station":"bar","sold_out":false,"order":20,"options":[]}
+{"code":"S-03","category":"S","name":"お通し","price":800,"tax":10,"station":"kitchen","sold_out":false,"order":30,"options":[]}
+{"code":"B-01","category":"B","name":"焼酎ボトル","price":5000,"tax":10,"station":"bar","sold_out":false,"order":10,"options":[{"code":"MUGI","name":"麦","price":0},{"code":"IMO","name":"芋","price":500}]}
+{"code":"B-02","category":"B","name":"ウイスキーボトル","price":6000,"tax":10,"station":"bar","sold_out":false,"order":20,"options":[]}
+{"code":"B-03","category":"B","name":"ボトルキープ出し","price":0,"tax":10,"station":"bar","sold_out":false,"order":30,"options":[]}
+{"code":"B-04","category":"B","name":"水割りセット","price":800,"tax":10,"station":"bar","sold_out":false,"order":40,"options":[{"code":"KOI","name":"濃いめ","price":0},{"code":"OY","name":"お湯割り","price":0}]}
+{"code":"D-01","category":"D","name":"生ビール","price":800,"tax":10,"station":"bar","sold_out":false,"order":10,"options":[]}
+{"code":"D-02","category":"D","name":"ハイボール","price":700,"tax":10,"station":"bar","sold_out":false,"order":20,"options":[{"code":"KOI","name":"濃いめ","price":100}]}
+{"code":"D-03","category":"D","name":"梅酒","price":700,"tax":10,"station":"bar","sold_out":false,"order":30,"options":[{"code":"ROCK","name":"ロック","price":0},{"code":"SODA","name":"ソーダ割り","price":0}]}
+{"code":"D-04","category":"D","name":"ソフトドリンク","price":600,"tax":10,"station":"bar","sold_out":false,"order":40,"options":[]}
+{"code":"D-05","category":"D","name":"烏龍茶","price":500,"tax":10,"station":"bar","sold_out":false,"order":50,"options":[]}
+{"code":"C-01","category":"C","name":"キャストドリンク","price":1200,"tax":10,"station":"bar","sold_out":false,"order":10,"options":[]}
+{"code":"C-02","category":"C","name":"キャストシャンパン","price":8000,"tax":10,"station":"bar","sold_out":false,"order":20,"options":[]}
+{"code":"F-01","category":"F","name":"乾き物","price":800,"tax":10,"station":"kitchen","sold_out":false,"order":10,"options":[]}
+{"code":"F-02","category":"F","name":"チョコ盛り","price":1000,"tax":10,"station":"kitchen","sold_out":false,"order":20,"options":[]}
+{"code":"F-03","category":"F","name":"フルーツ盛り","price":2500,"tax":10,"station":"kitchen","sold_out":false,"order":30,"options":[]}
+{"code":"K-01","category":"K","name":"カラオケ 1曲","price":200,"tax":10,"station":"bar","sold_out":false,"order":10,"options":[]}

@@ -1,0 +1,6 @@
+{"code":"S","name":"セット・席料","order":10}
+{"code":"B","name":"ボトル","order":20}
+{"code":"D","name":"ドリンク","order":30}
+{"code":"C","name":"キャストドリンク","order":40}
+{"code":"F","name":"フード","order":50}
+{"code":"K","name":"カラオケ","order":60}

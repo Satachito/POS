@@ -1,0 +1,13 @@
+{"code":"C1","name":"カウンター1","seats":1,"area":"counter","order":10}
+{"code":"C2","name":"カウンター2","seats":1,"area":"counter","order":20}
+{"code":"C3","name":"カウンター3","seats":1,"area":"counter","order":30}
+{"code":"C4","name":"カウンター4","seats":1,"area":"counter","order":40}
+{"code":"C5","name":"カウンター5","seats":1,"area":"counter","order":50}
+{"code":"C6","name":"カウンター6","seats":1,"area":"counter","order":60}
+{"code":"C7","name":"カウンター7","seats":1,"area":"counter","order":70}
+{"code":"C8","name":"カウンター8","seats":1,"area":"counter","order":80}
+{"code":"C9","name":"カウンター9","seats":1,"area":"counter","order":90}
+{"code":"C10","name":"カウンター10","seats":1,"area":"counter","order":100}
+{"code":"B1","name":"ボックス1","seats":4,"area":"box","order":110}
+{"code":"B2","name":"ボックス2","seats":4,"area":"box","order":120}
+{"code":"B3","name":"ボックス3","seats":4,"area":"box","order":130}
