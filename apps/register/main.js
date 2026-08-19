@@ -51,6 +51,7 @@ bills		= []
 ,	selected	= null	//	order_id
 ,	detail		= null	//	the refetched order
 ,	discount	= 0
+,	tendered	= 0
 
 //	----------------------------------------------------------------- render
 
@@ -94,6 +95,21 @@ Totals = () => {
 	}
 }
 
+//	The notes a customer actually hands over for this total.
+const
+Notes = total => [ total, ...[ 1000, 5000, 10000 ].map( step => Math.ceil( total / step ) * step ) ]
+.filter( ( _, i, all ) => _ > 0 && all.indexOf( _ ) === i )
+.sort( ( a, b ) => a - b )
+.slice( 0, 4 )
+
+const
+NoteButtons = total => Notes( total ).map( _ => `<button data-note="${ _ }">${ _ === total ? 'ちょうど' : yen( _ ) }</button>` ).join( '' )
+
+const
+ChangeLine = total => tendered >= total && tendered > 0
+?	`<span class="grow">釣銭</span><span class="amount">${ yen( tendered - total ) }</span>`
+:	''
+
 const
 RenderDetail = () => {
 	const
@@ -123,9 +139,15 @@ RenderDetail = () => {
 				<input type="number" id="discount" min="0" step="100" value="${ discount || '' }" placeholder="0">
 			</div>
 			<div class="row">
+				<span class="grow">預り</span>
+				<input type="number" id="tendered" min="0" step="1000" value="${ tendered || '' }" placeholder="0">
+			</div>
+			<div class="notes" id="notes">${ NoteButtons( total ) }</div>
+			<div class="row">
 				<span class="grow">合計</span>
 				<span class="total">${ yen( total ) }</span>
 			</div>
+			<div class="row change" id="change">${ ChangeLine( total ) }</div>
 			<div class="tax">${ tax }</div>
 			<button class="settle" id="settle">会計する</button>
 		</div>`
@@ -151,7 +173,7 @@ Reload = async () => {
 const
 Open = async ( orderId, reset = true ) => {
 	selected = orderId
-	if ( reset ) discount = 0
+	if ( reset ) { discount = 0; tendered = 0 }
 	detail = await GET( `order/${ orderId }` )
 	RenderBills()
 	RenderDetail()
@@ -179,29 +201,48 @@ $( 'detail' ).addEventListener( 'click', async e => {
 		} catch ( err ) { Report( err ) }
 		return
 	}
+	const
+	note = e.target.closest( '[data-note]' )
+	if ( note ) {
+		tendered = Number( note.dataset.note )
+		$( 'tendered' ).value = tendered
+		Repaint()
+		return
+	}
 	if ( e.target.id === 'settle' ) {
 		if ( !confirm( `${ Label( detail ) } を会計します` ) ) return
 		try {
-			await POST( `order/${ selected }/close`, { discount, terminal: 'REGISTER' } )
+			await POST( `order/${ selected }/close`, { discount, tendered, terminal: 'REGISTER' } )
 			selected = null
 			detail = null
+			discount = 0
+			tendered = 0
 			RenderDetail()
 			await Reload()
 		} catch ( err ) { Report( err ) }
 	}
 } )
 
-$( 'detail' ).addEventListener( 'input', e => {
-	if ( e.target.id !== 'discount' || !detail ) return
-	discount = Number( e.target.value ) || 0
-
-	//	Redrawing would take the focus out of the field mid-keystroke, so the two figures that
-	//	move are patched in place. Both of them: a tax line that lags the discount is a wrong
-	//	number sitting under a right one.
+//	Redrawing would take the focus out of the field mid-keystroke, so the figures that move
+//	are patched in place. All of them: a tax line that lags the discount is a wrong number
+//	sitting under a right one.
+const
+Repaint = () => {
+	if ( !detail ) return
 	const
 	{ total, tax } = Totals()
-	$( 'detail' ).querySelector( '.total' ).textContent = yen( total )
-	$( 'detail' ).querySelector( '.tax' ).textContent = tax
+	$( 'detail' ).querySelector( '.total' ).textContent	= yen( total )
+	$( 'detail' ).querySelector( '.tax' ).textContent	= tax
+	$( 'change' ).innerHTML								= ChangeLine( total )
+	$( 'notes' ).innerHTML								= NoteButtons( total )
+}
+
+$( 'detail' ).addEventListener( 'input', e => {
+	if ( !detail ) return
+	if ( e.target.id === 'discount' )		discount = Number( e.target.value ) || 0
+	else if ( e.target.id === 'tendered' )	tendered = Number( e.target.value ) || 0
+	else return
+	Repaint()
 } )
 
 const
