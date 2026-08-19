@@ -79,8 +79,6 @@ data class Bill(
 ,	val total		: Int = 0
 ,	val tax			: List< TaxLine > = emptyList()
 ,	val payments	: List< Payment > = emptyList()
-,	val paid		: Int = 0
-,	val change		: Int = 0
 )
 
 @Serializable
