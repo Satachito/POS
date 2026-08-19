@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>会計</title>
+<link rel="stylesheet" href="/apps/register/style.css">
+</head>
+<body>
+<header>
+	<h1 id="store">会計</h1>
+	<div id="today" class="today"></div>
+	<span id="link" class="down">接続中…</span>
+</header>
+
+<main>
+	<section class="list">
+		<h2>開いている伝票 <span id="count"></span></h2>
+		<div id="bills"></div>
+	</section>
+	<section id="detail" class="detail">
+		<p class="empty">左から伝票を選んでください</p>
+	</section>
+</main>
+
+<script type="module" src="/apps/register/main.js"></script>
+</body>
+</html>
