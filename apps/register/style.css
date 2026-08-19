@@ -1,0 +1,123 @@
+/*	The counter PC at closing time: a list of who is still open, and one bill at a time
+	filling the right half. Amounts are the thing being read, so they are the largest text
+	on the page and always right-aligned in a tabular column. */
+
+:root {
+	--bg		: #f6f7f9;
+	--panel		: #ffffff;
+	--ink		: #1a1d23;
+	--dim		: #6b7280;
+	--line		: #dfe3e9;
+	--accent	: #2563eb;
+	--danger	: #c0392b;
+	--open		: #0f766e;
+	--ok		: #2f855a;
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+	background		: var(--bg);
+	color			: var(--ink);
+	font-family		: system-ui, -apple-system, "Hiragino Sans", sans-serif;
+	font-size		: 14px;
+	height			: 100vh;
+	display			: flex;
+	flex-direction	: column;
+}
+
+header {
+	display			: flex;
+	align-items		: baseline;
+	gap				: 1.2rem;
+	padding			: .6rem 1rem;
+	background		: var(--panel);
+	border-bottom	: 1px solid var(--line);
+}
+header h1	{ font-size: 1rem; }
+.today		{ font-size: .85rem; color: var(--dim); }
+.today b	{ color: var(--ink); font-variant-numeric: tabular-nums; }
+#link		{ margin-left: auto; font-size: .8rem; color: var(--ok); }
+#link.down	{ color: var(--danger); }
+
+main {
+	flex					: 1;
+	overflow				: hidden;
+	display					: grid;
+	grid-template-columns	: minmax(280px, 1fr) minmax(360px, 1.4fr);
+}
+@media (max-width: 820px) { main { grid-template-columns: 1fr; } }
+
+.list		{ overflow-y: auto; border-right: 1px solid var(--line); }
+.list h2 {
+	font-size		: .75rem;
+	letter-spacing	: .08em;
+	color			: var(--dim);
+	padding			: .8rem 1rem .4rem;
+	position		: sticky;
+	top				: 0;
+	background		: var(--bg);
+}
+
+.bill {
+	display			: flex;
+	align-items		: center;
+	gap				: .8rem;
+	padding			: .7rem 1rem;
+	background		: var(--panel);
+	border-bottom	: 1px solid var(--line);
+	cursor			: pointer;
+}
+.bill:hover					{ background: #eef2f7; }
+.bill[aria-selected="true"]	{ box-shadow: inset 3px 0 0 var(--accent); background: #eef2f7; }
+.bill .who					{ font-size: 1.05rem; font-weight: 600; }
+.bill .meta					{ font-size: .75rem; color: var(--dim); }
+.bill .amount				{ margin-left: auto; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+
+.detail		{ overflow-y: auto; padding: 1rem 1.2rem; background: var(--panel); }
+.detail h2	{ font-size: 1.4rem; }
+.detail .meta { color: var(--dim); font-size: .8rem; margin-bottom: .8rem; }
+
+table		{ width: 100%; border-collapse: collapse; }
+td			{ border-bottom: 1px solid var(--line); padding: .45rem .3rem; vertical-align: top; }
+td.qty		{ width: 2.6rem; font-weight: 700; }
+td.amt		{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.act		{ width: 3.4rem; text-align: right; }
+tr.void td	{ color: var(--dim); text-decoration: line-through; }
+.opt		{ color: var(--accent); font-size: .8rem; }
+.note		{ color: #b45309; font-size: .8rem; }
+
+.foot		{ margin-top: 1rem; display: grid; gap: .7rem; }
+.row		{ display: flex; align-items: baseline; gap: .8rem; }
+.row .grow	{ flex: 1; }
+.total		{ font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tax		{ font-size: .8rem; color: var(--dim); }
+
+input[type="number"], input[type="text"] {
+	font			: inherit;
+	padding			: .4rem .5rem;
+	border			: 1px solid var(--line);
+	border-radius	: 6px;
+	width			: 8rem;
+	text-align		: right;
+}
+
+button {
+	font			: inherit;
+	border			: 1px solid var(--line);
+	background		: var(--panel);
+	color			: var(--ink);
+	border-radius	: 6px;
+	padding			: .3rem .8rem;
+	cursor			: pointer;
+}
+button.settle {
+	width			: 100%;
+	padding			: .9rem;
+	font-size		: 1.1rem;
+	background		: var(--accent);
+	border-color	: var(--accent);
+	color			: #fff;
+}
+button.void		{ color: var(--danger); border-color: transparent; background: transparent; }
+.empty			{ color: var(--dim); text-align: center; padding: 4rem 1rem; }
