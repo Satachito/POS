@@ -131,11 +131,11 @@ class Repo( context: Context ) {
 		,	"取消 $label"
 		)
 
-	suspend fun close( orderId: String, payments: List< Payment >, discount: Int, label: String ) =
+	suspend fun close( orderId: String, discount: Int, label: String ) =
 		enqueue(
 			"close:$orderId"
 		,	"order/$orderId/close"
-		,	JSON.encodeToString( CloseRequest( payments, discount, "", config.terminal ) )
+		,	JSON.encodeToString( CloseRequest( discount, "", config.terminal ) )
 		,	"会計 $label"
 		)
 
