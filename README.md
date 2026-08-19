@@ -220,11 +220,13 @@ codes. Names, prices, tax rates, option surcharges and every total are resolved 
 
 ### Settlement
 
-A bill records what was taken, by method, and the amounts have to add up to it exactly.
-There is no tendered amount and no change: counting out a note and its change happens at the
-drawer where it can be seen, and keying it in again only creates a second number to disagree
-with the first. `/pos/sales` still nets out the change on bills closed before this, so a
-day's takings stay comparable across the switch.
+Settling records that a bill was settled and for how much. Nothing else: no tendered amount,
+no change, no payment method. Counting out a note happens at the drawer where it can be seen,
+and keying it in again only creates a second number to disagree with the first.
+
+The cost of that is real and worth knowing: **`/pos/sales` cannot tell cash from card**. It
+reports what was sold, not what is in the till. A store taking card payments needs something
+else to reconcile against.
 
 ### Tax
 

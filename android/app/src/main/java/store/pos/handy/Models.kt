@@ -70,15 +70,11 @@ data class TableView(
 data class TaxLine( val rate: Int = 0, val base: Int = 0, val amount: Int = 0 )
 
 @Serializable
-data class Payment( val method: String, val amount: Int )
-
-@Serializable
 data class Bill(
 	val subtotal	: Int = 0
 ,	val discount	: Int = 0
 ,	val total		: Int = 0
 ,	val tax			: List< TaxLine > = emptyList()
-,	val payments	: List< Payment > = emptyList()
 )
 
 @Serializable
@@ -134,7 +130,7 @@ data class LineRequest( val item: String, val qty: Int, val options: List< Strin
 data class TicketRequest( val ticket_id: String, val order_id: String, val terminal: String, val lines: List< LineRequest > )
 
 @Serializable
-data class CloseRequest( val payments: List< Payment >, val discount: Int = 0, val note: String = "", val terminal: String )
+data class CloseRequest( val discount: Int = 0, val note: String = "", val terminal: String )
 
 @Serializable
 data class VoidRequest( val line: Int, val reason: String = "", val terminal: String )
