@@ -92,6 +92,9 @@ tr.void td	{ color: var(--dim); text-decoration: line-through; }
 .row .grow	{ flex: 1; }
 .total		{ font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tax		{ font-size: .8rem; color: var(--dim); }
+.notes		{ display: flex; gap: .4rem; flex-wrap: wrap; }
+.change		{ color: var(--open); }
+.change .amount { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 input[type="number"], input[type="text"] {
 	font			: inherit;
