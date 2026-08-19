@@ -7,6 +7,9 @@
 //	State lives on the server. This page holds a ticket list, redraws it when SSE says
 //	something changed, and refetches on reconnect -- so a display that was unplugged for
 //	ten minutes comes back correct rather than stale.
+//
+//	The big line on each card is whoever the bill belongs to: a table in an izakaya, a
+//	person in a snack, where regulars move along the counter and the seat means little.
 
 const
 TOKEN	= new URLSearchParams( location.search ).get( 'token' )
@@ -66,8 +69,8 @@ Render = () => {
 		return `
 		<article class="ticket ${ Heat( m ) } ${ t.state }" data-ticket="${ t.ticket_id }">
 			<div class="head">
-				<span class="table">${ t.table }</span>
-				<span class="slip">${ t.number } / ${ t.seq }回目</span>
+				<span class="table">${ t.customer || t.table || t.number }</span>
+				<span class="slip">${ t.customer && t.table ? t.table + ' / ' : '' }${ t.number } / ${ t.seq }回目</span>
 				<span class="clock">${ m }分</span>
 			</div>
 			<ul>${ lines.map( l => `

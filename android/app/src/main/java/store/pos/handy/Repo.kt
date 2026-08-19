@@ -21,11 +21,13 @@ class Repo( context: Context ) {
 
 	private val _menu	= MutableStateFlow( Menu() )
 	private val _tables	= MutableStateFlow< List< TableView > >( emptyList() )
+	private val _bills	= MutableStateFlow< List< OpenOrder > >( emptyList() )
 	private val _online	= MutableStateFlow( false )
 	private val _note	= MutableStateFlow< String? >( null )
 
 	val menu	= _menu.asStateFlow()
 	val tables	= _tables.asStateFlow()
+	val bills	= _bills.asStateFlow()
 	val online	= _online.asStateFlow()
 	val note	= _note.asStateFlow()
 
@@ -43,6 +45,7 @@ class Repo( context: Context ) {
 	private suspend fun restore() {
 		db.cache().get( "menu" )?.let { runCatching { _menu.value = JSON.decodeFromString< Menu >( it.json ) } }
 		db.cache().get( "tables" )?.let { runCatching { _tables.value = JSON.decodeFromString( it.json ) } }
+		db.cache().get( "bills" )?.let { runCatching { _bills.value = JSON.decodeFromString( it.json ) } }
 	}
 
 	//	Menus are asked for by hash: an unchanged menu costs a few dozen bytes, so this can run
@@ -63,6 +66,14 @@ class Repo( context: Context ) {
 			tables = api.get( "tables" )
 			_tables.value = JSON.decodeFromString( tables )
 			db.cache().put( Cached( "tables", tables ) )
+
+			//	Open bills are the home screen of a store whose tabs belong to people; seats are
+			//	the home screen of one whose tabs belong to tables. Both are cheap, so fetch both
+			//	and let the screen pick.
+			val
+			bills = api.get( "orders" )
+			_bills.value = JSON.decodeFromString( bills )
+			db.cache().put( Cached( "bills", bills ) )
 
 			_online.value = true
 		} catch ( e: Rejected ) {
@@ -87,26 +98,28 @@ class Repo( context: Context ) {
 		wake.trySend( Unit )
 	}
 
-	suspend fun openTable( table: String, guests: Int ): String {
+	suspend fun open( customer: String, table: String?, guests: Int ): String {
 		val
 		id = UUID.randomUUID().toString()
+		val
+		label = customer.ifBlank { table ?: "伝票" }
 		enqueue(
 			id
 		,	"order"
-		,	JSON.encodeToString( OpenRequest( id, table, guests, config.terminal ) )
-		,	"$table 開卓 ${ guests }名"
+		,	JSON.encodeToString( OpenRequest( id, customer, table, guests, config.terminal ) )
+		,	"$label 開始 ${ guests }名"
 		)
 		return id
 	}
 
-	suspend fun send( orderId: String, table: String, lines: List< LineRequest >, summary: String ) {
+	suspend fun send( orderId: String, label: String, lines: List< LineRequest >, summary: String ) {
 		val
 		id = UUID.randomUUID().toString()
 		enqueue(
 			id
 		,	"ticket"
 		,	JSON.encodeToString( TicketRequest( id, orderId, config.terminal, lines ) )
-		,	"$table $summary"
+		,	"$label $summary"
 		)
 	}
 

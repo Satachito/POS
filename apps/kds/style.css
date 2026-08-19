@@ -77,9 +77,24 @@ main {
 	padding			: .6rem .8rem;
 	border-bottom	: 1px solid var(--line);
 }
-.table		{ font-size: 1.7rem; font-weight: 700; }
-.slip		{ font-size: .8rem; color: var(--dim); }
-.clock		{ margin-left: auto; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
+/*	The name is the thing a cook reads across the room, so it never wraps or shrinks --
+	the slip reference gives way instead, and the clock keeps its column. */
+.table {
+	font-size		: 1.7rem;
+	font-weight		: 700;
+	flex			: 0 0 auto;
+	white-space		: nowrap;
+}
+.slip {
+	font-size		: .8rem;
+	color			: var(--dim);
+	flex			: 1 1 0;
+	min-width		: 0;
+	white-space		: nowrap;
+	overflow		: hidden;
+	text-overflow	: ellipsis;
+}
+.clock		{ margin-left: auto; flex: 0 0 auto; font-size: 1.3rem; font-variant-numeric: tabular-nums; }
 .warn .clock{ color: var(--warn); }
 .late .clock{ color: var(--late); }
 

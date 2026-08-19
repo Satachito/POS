@@ -25,9 +25,18 @@ data class MenuItem(
 ,	val options		: List< ItemOption > = emptyList()
 )
 
+//	What a bill belongs to. "table" is an izakaya: one bill per seat, opened by pointing at
+//	it. "customer" is a snack: the bill belongs to a person who is named when it is opened,
+//	moves along the counter, and may share a seat with somebody else's tab.
+@Serializable
+data class Store( val order_by: String = "table", val name: String = "" ) {
+	val byCustomer get() = order_by == "customer"
+}
+
 @Serializable
 data class Menu(
 	val version		: String = ""
+,	val store		: Store = Store()
 ,	val categories	: List< Category > = emptyList()
 ,	val items		: List< MenuItem > = emptyList()
 )
@@ -36,11 +45,16 @@ data class Menu(
 data class OpenOrder(
 	val order_id	: String
 ,	val number		: String = ""
+,	val customer	: String = ""
+,	val table		: String? = null
 ,	val guests		: Int = 0
 ,	val opened_at	: String = ""
 ,	val tickets		: Int = 0
 ,	val total		: Int = 0
-)
+) {
+	//	Whatever a person would call this bill when shouting across the room.
+	val label get() = customer.ifBlank { table ?: number }
+}
 
 @Serializable
 data class TableView(
@@ -88,7 +102,8 @@ data class Ticket(
 	val ticket_id	: String
 ,	val order_id	: String = ""
 ,	val number		: String = ""
-,	val table		: String = ""
+,	val customer	: String = ""
+,	val table		: String? = null
 ,	val seq			: Int = 0
 ,	val at			: String = ""
 ,	val state		: String = "queued"
@@ -99,7 +114,8 @@ data class Ticket(
 data class OrderView(
 	val order_id	: String
 ,	val number		: String = ""
-,	val table		: String = ""
+,	val customer	: String = ""
+,	val table		: String? = null
 ,	val guests		: Int = 0
 ,	val opened_at	: String = ""
 ,	val closed_at	: String? = null
@@ -111,7 +127,7 @@ data class OrderView(
 //	it after a lost response without the kitchen or the till seeing it twice.
 
 @Serializable
-data class OpenRequest( val order_id: String, val table: String, val guests: Int, val terminal: String )
+data class OpenRequest( val order_id: String, val customer: String, val table: String?, val guests: Int, val terminal: String )
 
 @Serializable
 data class LineRequest( val item: String, val qty: Int, val options: List< String > = emptyList(), val note: String = "" )

@@ -1,5 +1,6 @@
 package store.pos.handy
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -36,6 +37,8 @@ class MainActivity : ComponentActivity() {
 				val
 				config by repo.configFlow.collectAsState()
 				val
+				menu by repo.menu.collectAsState()
+				val
 				note by repo.note.collectAsState()
 				val
 				snackbar = remember { SnackbarHostState() }
@@ -62,34 +65,44 @@ class MainActivity : ComponentActivity() {
 							SettingsScreen( repo ) { nav.navigate( "tables" ) { popUpTo( 0 ) } }
 						}
 
+						//	One home screen or the other, decided by the store rather than the build:
+						//	seats for an izakaya, named tabs for a snack. Labels can be Japanese names,
+						//	so they are encoded on the way into the route and decoded on the way out.
 						composable( "tables" ) {
-							TablesScreen(
+							val
+							Go = { label: String, orderId: String -> nav.navigate( "order/${ Uri.encode( label ) }/$orderId" ) }
+							if ( menu.store.byCustomer ) BillsScreen(
 								repo
-							,	onOrder		= { table, orderId -> nav.navigate( "order/$table/$orderId" ) }
+							,	onOrder		= Go
+							,	onSettings	= { nav.navigate( "settings" ) }
+							,	onPending	= { nav.navigate( "pending" ) }
+							) else TablesScreen(
+								repo
+							,	onOrder		= Go
 							,	onSettings	= { nav.navigate( "settings" ) }
 							,	onPending	= { nav.navigate( "pending" ) }
 							)
 						}
 
-						composable( "order/{table}/{orderId}" ) { entry ->
+						composable( "order/{label}/{orderId}" ) { entry ->
 							val
-							table	= entry.arguments?.getString( "table" ) ?: ""
+							label	= Uri.decode( entry.arguments?.getString( "label" ) ?: "" )
 							val
 							orderId	= entry.arguments?.getString( "orderId" ) ?: ""
 							OrderScreen(
-								repo, table, orderId
+								repo, label, orderId
 							,	onBack	= { nav.popBackStack() }
-							,	onBill	= { nav.navigate( "bill/$table/$orderId" ) }
+							,	onBill	= { nav.navigate( "bill/${ Uri.encode( label ) }/$orderId" ) }
 							)
 						}
 
-						composable( "bill/{table}/{orderId}" ) { entry ->
+						composable( "bill/{label}/{orderId}" ) { entry ->
 							val
-							table	= entry.arguments?.getString( "table" ) ?: ""
+							label	= Uri.decode( entry.arguments?.getString( "label" ) ?: "" )
 							val
 							orderId	= entry.arguments?.getString( "orderId" ) ?: ""
 							BillScreen(
-								repo, table, orderId
+								repo, label, orderId
 							,	onBack	= { nav.popBackStack() }
 							,	onDone	= { nav.navigate( "tables" ) { popUpTo( "tables" ) { inclusive = true } } }
 							)

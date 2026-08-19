@@ -11,6 +11,7 @@
 //		POST  /pos/menu/publish             tell every listener the menu moved
 //		POST  /pos/item/{code}/soldout      flip one item, from the floor or the counter
 //		GET   /pos/tables                   every table with its open order
+//		GET   /pos/orders                   every unsettled bill, whoever it belongs to
 //		POST  /pos/order                    open a table              (idempotent: order_id)
 //		GET   /pos/order/{order_id}         the order, its tickets and the running bill
 //		POST  /pos/order/{order_id}/close   settle                    (an order closes once)
@@ -96,25 +97,32 @@ const
 BuildIndex = pos => {
 	const
 	byOrder	= new Map()	//	order_id → ticket_id[]
-,	openOf	= new Map()	//	table code → order_id
+,	open	= new Set()	//	order_id of every unsettled bill
 
 	for ( const t of pos.tickets.all() ) {
 		if ( !byOrder.has( t.order_id ) ) byOrder.set( t.order_id, [] )
 		byOrder.get( t.order_id ).push( t.ticket_id )
 	}
-	for ( const o of pos.orders.all() ) if ( !o.closed_at ) openOf.set( o.table, o.order_id )
+	for ( const o of pos.orders.all() ) if ( !o.closed_at ) open.add( o.order_id )
 
-	return { byOrder, openOf }
+	return { byOrder, open }
 }
 
 //	----------------------------------------------------------------- menu
+
+//	What a bill belongs to. An izakaya bill belongs to the table it was opened on and the
+//	table holds one at a time; a snack's belongs to the person, who may move seats, sit at
+//	the counter next to another tab, or have no seat at all.
+const
+StoreOf = pos => ( { order_by: 'table', ...( pos.config.get( 'store' ) ?? {} ) } )
 
 const
 MenuOf = pos => {
 	const
 	By = _ => ( a, b ) => ( a[ _ ] ?? 0 ) - ( b[ _ ] ?? 0 ) || String( a.code ).localeCompare( b.code )
 	return {
-		categories	: [ ...pos.categories.all()	].sort( By( 'order' ) )
+		store		: StoreOf( pos )
+	,	categories	: [ ...pos.categories.all()	].sort( By( 'order' ) )
 	,	items		: [ ...pos.items.all()		].sort( By( 'order' ) )
 	,	tables		: [ ...pos.tables.all()		].sort( By( 'order' ) )
 	}
@@ -258,31 +266,43 @@ POSRoutes = pos => {
 		return item
 	}
 
+	const
+	OpenOrders = () => [ ...index.open ]
+	.map( _ => pos.orders.get( _ ) )
+	.filter( Boolean )
+	.sort( ( a, b ) => a.opened_at < b.opened_at ? -1 : 1 )
+
+	const
+	Summary = order => {
+		const
+		tickets = TicketsOf( pos, index, order.order_id )
+		return {
+			order_id	: order.order_id
+		,	number		: order.number
+		,	customer	: order.customer ?? ''
+		,	table		: order.table
+		,	guests		: order.guests
+		,	opened_at	: order.opened_at
+		,	tickets		: tickets.length
+		,	total		: Bill( tickets ).total
+		}
+	}
+
 	//	Sorted, not in cluster order: put() removes and re-adds a record, so an edited table
 	//	would otherwise jump to the end of every handy's list.
 	const
-	Tables = () => [ ...pos.tables.all() ].sort( ( a, b ) => ( a.order ?? 0 ) - ( b.order ?? 0 ) || String( a.code ).localeCompare( b.code ) ).map( table => {
+	Tables = () => {
 		const
-		order_id = index.openOf.get( table.code )
-		//	The open order goes in `open`, not `order`: a table record already carries `order`
-		//	as its display position, and spreading a second meaning over it loses the first.
-		if ( !order_id ) return { ...table, open: null }
-
-		const
-		order	= pos.orders.get( order_id )
-	,	tickets	= TicketsOf( pos, index, order_id )
-		return {
-			...table
-		,	open: {
-				order_id
-			,	number		: order.number
-			,	guests		: order.guests
-			,	opened_at	: order.opened_at
-			,	tickets		: tickets.length
-			,	total		: Bill( tickets ).total
-			}
-		}
-	} )
+		open = OpenOrders()
+		return [ ...pos.tables.all() ].sort( ( a, b ) => ( a.order ?? 0 ) - ( b.order ?? 0 ) || String( a.code ).localeCompare( b.code ) ).map( table => {
+			const
+			order = open.find( _ => _.table === table.code )
+			//	The open order goes in `open`, not `order`: a table record already carries `order`
+			//	as its display position, and spreading a second meaning over it loses the first.
+			//	In customer mode a seat can hold several tabs; this shows the first of them.
+			return { ...table, open: order ? Summary( order ) : null }
+		} )
+	}
 
 	const
 	OpenOrder = async Q => {
@@ -296,18 +316,35 @@ POSRoutes = pos => {
 		if ( known ) return OrderView( pos, index, known )
 
 		const
-		table = pos.tables.get( String( body.table ) )
-		if ( !table ) Fail( 400, `No such table: ${ body.table }` )
+		byCustomer	= StoreOf( pos ).order_by === 'customer'
+	,	customer	= String( body.customer ?? '' ).trim()
 
-		const
-		occupied = index.openOf.get( table.code )
-		if ( occupied ) Fail( 409, `Table ${ table.code } is already open`, OrderView( pos, index, pos.orders.get( occupied ) ) )
+		if ( byCustomer && !customer ) Fail( 400, '名前を入力してください' )
+
+		//	A seat is optional once the bill belongs to a person: regulars move along the
+		//	counter, and two tabs can sit side by side.
+		let
+		table = null
+		if ( body.table ) {
+			const
+			found = pos.tables.get( String( body.table ) )
+			if ( !found ) Fail( 400, `No such table: ${ body.table }` )
+			table = found.code
+		}
+
+		if ( !byCustomer ) {
+			if ( !table ) Fail( 400, 'table is required' )
+			const
+			occupied = OpenOrders().find( _ => _.table === table )
+			if ( occupied ) Fail( 409, `Table ${ table } is already open`, OrderView( pos, index, occupied ) )
+		}
 
 		const
 		order = {
 			order_id	: String( body.order_id )
 		,	number		: NextNumber( pos )
-		,	table		: table.code
+		,	customer	: customer
+		,	table		: table
 		,	guests		: Number( body.guests ) || 1
 		,	terminal	: String( body.terminal ?? '' )
 		,	opened_at	: Now()
@@ -315,7 +352,7 @@ POSRoutes = pos => {
 		,	bill		: null
 		}
 		pos.orders.insert( order.order_id, order )
-		index.openOf.set( table.code, order.order_id )
+		index.open.add( order.order_id )
 
 		Broadcast( 'order', { action: 'open', order } )
 		return OrderView( pos, index, order )
@@ -344,6 +381,7 @@ POSRoutes = pos => {
 			ticket_id	: String( body.ticket_id )
 		,	order_id	: order.order_id
 		,	number		: order.number
+		,	customer	: order.customer ?? ''
 		,	table		: order.table
 		,	terminal	: String( body.terminal ?? '' )
 		,	seq			: ( index.byOrder.get( order.order_id )?.length ?? 0 ) + 1
@@ -451,7 +489,7 @@ POSRoutes = pos => {
 		,	terminal	: String( body.terminal ?? '' )
 		}
 		pos.orders.replace( order_id, order )
-		index.openOf.delete( order.table )
+		index.open.delete( order_id )
 
 		Broadcast( 'order', { action: 'close', order } )
 		return OrderView( pos, index, order )
@@ -519,6 +557,10 @@ POSRoutes = pos => {
 				case 'tables':
 					return GET ? SendJSONable( S, Tables() ) : _405( S )
 
+				//	The home screen of a store whose bills belong to people rather than seats.
+				case 'orders':
+					return GET ? SendJSONable( S, OpenOrders().map( Summary ) ) : _405( S )
+
 				case 'order':
 					if ( !a )					return POST	? SendJSONable( S, await OpenOrder( Q ) )	: _405( S )
 					if ( b === 'close' )		return POST	? SendJSONable( S, await Close( Q, a ) )	: _405( S )
@@ -550,7 +592,7 @@ POSRoutes = pos => {
 						at			: Now()
 					,	orders		: pos.orders.count()
 					,	tickets		: pos.tickets.count()
-					,	open		: index.openOf.size
+					,	open		: index.open.size
 					,	listeners	: ClientCount()
 					} )
 

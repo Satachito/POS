@@ -110,7 +110,7 @@ fun TablesScreen(
 				TextButton( {
 					scope.launch {
 						val
-						id = repo.openTable( table.code, guests )
+						id = repo.open( "", table.code, guests )
 						seating = null
 						onOrder( table.code, id )
 					}

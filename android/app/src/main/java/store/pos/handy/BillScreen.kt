@@ -21,7 +21,7 @@ private val METHODS = listOf( "cash" to "現金", "card" to "カード", "qr" to
 
 @OptIn( ExperimentalMaterial3Api::class )
 @Composable
-fun BillScreen( repo: Repo, table: String, orderId: String, onBack: () -> Unit, onDone: () -> Unit ) {
+fun BillScreen( repo: Repo, label: String, orderId: String, onBack: () -> Unit, onDone: () -> Unit ) {
 
 	val
 	scope = rememberCoroutineScope()
@@ -48,7 +48,7 @@ fun BillScreen( repo: Repo, table: String, orderId: String, onBack: () -> Unit, 
 	Scaffold(
 		topBar = {
 			TopAppBar(
-				title			= { Text( "$table 会計  ${ order?.number ?: "" }" ) }
+				title			= { Text( "$label 会計  ${ order?.number ?: "" }" ) }
 			,	navigationIcon	= { TextButton( onBack ) { Text( "戻る" ) } }
 			)
 		}
@@ -124,8 +124,8 @@ fun BillScreen( repo: Repo, table: String, orderId: String, onBack: () -> Unit, 
 					,	modifier	= Modifier.fillMaxWidth().height( 54.dp )
 					,	onClick		= {
 							scope.launch {
-								repo.close( orderId, listOf( Payment( method, paid ) ), off, "$table ${ order?.number ?: "" }" )
-								repo.say( "$table 会計 ${ yen( total ) }" + if ( method == "cash" ) " / 釣銭 ${ yen( change ) }" else "" )
+								repo.close( orderId, listOf( Payment( method, paid ) ), off, "$label ${ order?.number ?: "" }" )
+								repo.say( "$label 会計 ${ yen( total ) }" + if ( method == "cash" ) " / 釣銭 ${ yen( change ) }" else "" )
 								onDone()
 							}
 						}

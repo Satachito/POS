@@ -37,7 +37,7 @@ data class CartLine(
 @Composable
 fun OrderScreen(
 	repo	: Repo
-,	table	: String
+,	label	: String
 ,	orderId	: String
 ,	onBack	: () -> Unit
 ,	onBill	: () -> Unit
@@ -64,7 +64,7 @@ fun OrderScreen(
 	Scaffold(
 		topBar = {
 			TopAppBar(
-				title			= { Text( table, fontWeight = FontWeight.Bold ) }
+				title			= { Text( label, fontWeight = FontWeight.Bold ) }
 			,	navigationIcon	= { TextButton( onBack ) { Text( "戻る" ) } }
 			,	actions			= {
 					if ( pending.isNotEmpty() ) Text( "未送信 ${ pending.size }", color = Warn, modifier = Modifier.padding( end = 8.dp ) )
@@ -96,9 +96,9 @@ fun OrderScreen(
 							scope.launch {
 								//	Saved locally and gone from the screen before the network is
 								//	consulted: the floor keeps moving whatever the Wi-Fi does.
-								repo.send( orderId, table, lines, summary )
+								repo.send( orderId, label, lines, summary )
 								cart.clear()
-								repo.say( "$table に送信しました" )
+								repo.say( "$label に送信しました" )
 							}
 						}
 					) { Text( "送信", fontSize = 18.sp ) }

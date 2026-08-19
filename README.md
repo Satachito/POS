@@ -102,11 +102,31 @@ data/pos/
   tables.jsons       16 tables / 40 seats   keyFields: ["code"]      master, in git
   categories.jsons                          keyFields: ["code"]      master, in git
   items.jsons        menu, prices, options  keyFields: ["code"]      master, in git
+  config.jsons       store settings         keyFields: ["key"]       master, in git
   orders.jsons       伝票 = one settlement   keyFields: ["order_id"]  mutable
   tickets.jsons      キッチン伝票            keyFields: ["ticket_id"] content immutable
 ```
 
-An **order** is a table from seating to settlement. A **ticket** is one send to the kitchen;
+### Who a bill belongs to
+
+`config.jsons` holds one record that decides it:
+
+```json
+{ "key": "store", "name": "…", "order_by": "table" }
+```
+
+- **`table`** — an izakaya. A bill is opened by pointing at a seat, and a seat holds one bill
+  at a time. The handy's home screen is the floor plan.
+- **`customer`** — a snack. A bill is opened by typing a name, which is the first and only
+  thing required; the seat is optional, and two tabs can share one. Regulars move along the
+  counter and are known by name long before they are known by where they sat. The handy's
+  home screen is the list of open tabs, and the kitchen display heads each card with the
+  name instead of the seat.
+
+The setting rides in `/pos/menu`, so it is covered by the menu hash and every handy picks up
+a change on its next poll without a reinstall.
+
+An **order** is a bill from opening to settlement. A **ticket** is one send to the kitchen;
 its lines never change after they are written, only their served/void state does. Everything
 totals up from the tickets, so a bill can always be re-derived from what the kitchen actually
 got.

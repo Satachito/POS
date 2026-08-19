@@ -26,7 +26,7 @@ import { POSRoutes }	from './routes-pos.js'
 const
 ROOT	= path.resolve( path.dirname( url.fileURLToPath( import.meta.url ) ), '..' )
 ,	DATA	= path.join( ROOT, 'data', 'pos' )
-,	TABLES	= [ 'tables', 'categories', 'items', 'orders', 'tickets' ]
+,	TABLES	= [ 'config', 'tables', 'categories', 'items', 'orders', 'tickets' ]
 
 const
 clusters = {}
