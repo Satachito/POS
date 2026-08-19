@@ -508,15 +508,21 @@ POSRoutes = pos => {
 	,	tickets	= TicketsOf( pos, index, order_id )
 
 		//	Recomputed here from the tickets. Whatever total the handy showed is a display.
-		//
-		//	Settling records that the bill was settled and for how much. How the money arrived is
-		//	not tracked -- reconciling cash against card belongs to whatever counts the drawer.
 		const
 		bill = Bill( tickets, Number( body.discount ) || 0 )
+
+		//	When the money is counted out at a drawer, what was handed over and what went back is
+		//	worth keeping beside the sale: it is the only record of that drawer movement, and at
+		//	close it is what a till count can be checked against. Settling from the floor, where
+		//	there is no drawer, simply omits it.
+		const
+		tendered = Number( body.tendered ) || 0
+		if ( tendered && tendered < bill.total ) Fail( 400, `預り金が不足しています: ${ tendered } < ${ bill.total }`, bill )
 
 		order.closed_at	= Now()
 		order.bill		= {
 			...bill
+		,	...( tendered ? { tendered, change: tendered - bill.total } : {} )
 		,	note		: String( body.note ?? '' )
 		,	terminal	: String( body.terminal ?? '' )
 		}
