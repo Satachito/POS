@@ -55,12 +55,15 @@ fun TablesScreen(
 			)
 		}
 	) { padding ->
+		//	Three across on a 360dp phone, which is what the floor actually carries -- the
+		//	emulator's 411dp made 108dp look fine and it is not. Sixteen tables have to be
+		//	readable in one glance, not eight rows of scrolling.
 		LazyVerticalGrid(
-			columns				= GridCells.Adaptive( 108.dp )
+			columns				= GridCells.Adaptive( 100.dp )
 		,	modifier			= Modifier.padding( padding ).fillMaxSize()
-		,	contentPadding		= PaddingValues( 12.dp )
-		,	horizontalArrangement = Arrangement.spacedBy( 10.dp )
-		,	verticalArrangement	= Arrangement.spacedBy( 10.dp )
+		,	contentPadding		= PaddingValues( 10.dp )
+		,	horizontalArrangement = Arrangement.spacedBy( 8.dp )
+		,	verticalArrangement	= Arrangement.spacedBy( 8.dp )
 		) {
 			items( tables, key = { it.code } ) { table ->
 				val
@@ -71,7 +74,7 @@ fun TablesScreen(
 						.background( if ( open == null ) MaterialTheme.colorScheme.surface else Busy.copy( alpha = .10f ), RoundedCornerShape( 12.dp ) )
 						.border( if ( open == null ) 1.dp else 2.dp, if ( open == null ) Line else Busy, RoundedCornerShape( 12.dp ) )
 						.clickable { if ( open == null ) seating = table else onOrder( table.code, open.order_id ) }
-						.padding( 10.dp )
+						.padding( 8.dp )
 				) {
 					Text( table.code, fontWeight = FontWeight.Bold, fontSize = 24.sp )
 					if ( open == null ) {
@@ -79,10 +82,12 @@ fun TablesScreen(
 						Spacer( Modifier.weight( 1f ) )
 						Text( "空", color = MaterialTheme.colorScheme.onSurfaceVariant )
 					} else {
-						Text( "${ open.number } / ${ open.guests }名", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant )
+						//	Four lines is one too many for a card this size at three across, so the
+						//	head count rides along with the elapsed time rather than the slip number.
+						Text( open.number, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant )
 						Spacer( Modifier.weight( 1f ) )
-						Text( yen( open.total ), fontWeight = FontWeight.SemiBold )
-						Text( "${ minutesSince( open.opened_at ) }分", style = MaterialTheme.typography.bodySmall, color = Busy )
+						Text( yen( open.total ), fontWeight = FontWeight.SemiBold, maxLines = 1 )
+						Text( "${ open.guests }名・${ elapsed( open.opened_at ) }", style = MaterialTheme.typography.bodySmall, color = Busy, maxLines = 1 )
 					}
 				}
 			}

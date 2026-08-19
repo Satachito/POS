@@ -40,3 +40,12 @@ fun yen( amount: Int ) = "¥%,d".format( amount )
 fun minutesSince( at: String ): Int = runCatching {
 	( ( System.currentTimeMillis() - java.time.OffsetDateTime.parse( at ).toInstant().toEpochMilli() ) / 60000 ).toInt()
 }.getOrDefault( 0 )
+
+//	Minutes are what the floor thinks in, until they are not: a table left open overnight
+//	reads as "1073分", which nobody parses at a glance. Past two hours, switch to hours.
+fun elapsed( at: String ): String {
+	val
+	m = minutesSince( at )
+	//	Past two hours the minutes stop carrying information and start costing width.
+	return if ( m < 120 ) "${ m }分" else "${ m / 60 }時間"
+}
