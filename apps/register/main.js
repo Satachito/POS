@@ -68,6 +68,33 @@ RenderBills = () => {
 }
 
 const
+Amount = l => ( l.price + l.options.reduce( ( n, o ) => n + o.price, 0 ) ) * l.qty
+
+//	Mirrors the server's Bill(): tax per rate on the base after the discount has been
+//	apportioned across the rates it covers. Shown so the counter can read the figures before
+//	committing -- the server computes its own and never trusts these.
+const
+Totals = () => {
+	const
+	live = detail.tickets.flatMap( t => t.lines ).filter( l => l.state !== 'void' )
+	,	subtotal = live.reduce( ( n, l ) => n + Amount( l ), 0 )
+	,	off = Math.max( 0, Math.min( discount, subtotal ) )
+
+	const
+	perRate = new Map()
+	for ( const l of live ) perRate.set( l.tax, ( perRate.get( l.tax ) ?? 0 ) + Amount( l ) )
+
+	return {
+		total	: subtotal - off
+	,	tax		: [ ...perRate ]
+		.map( ( [ rate, sub ] ) => [ rate, subtotal ? sub - Math.round( off * sub / subtotal ) : 0 ] )
+		.sort( ( a, b ) => b[ 0 ] - a[ 0 ] )
+		.map( ( [ rate, base ] ) => `${ rate }% 内税 ${ yen( Math.round( base * rate / ( 100 + rate ) ) ) }` )
+		.join( '　' )
+	}
+}
+
+const
 RenderDetail = () => {
 	const
 	el = $( 'detail' )
@@ -75,25 +102,7 @@ RenderDetail = () => {
 
 	const
 	rows = detail.tickets.flatMap( t => t.lines.map( l => ( { t, l } ) ) )
-	,	Amount = l => ( l.price + l.options.reduce( ( n, o ) => n + o.price, 0 ) ) * l.qty
-
-	const
-	subtotal = rows.filter( _ => _.l.state !== 'void' ).reduce( ( n, _ ) => n + Amount( _.l ), 0 )
-	,	total = Math.max( 0, subtotal - discount )
-
-	//	Tax per rate on the discounted base, the same apportionment the server does -- shown
-	//	here only so the counter can read it before committing, never to be sent back.
-	const
-	perRate = new Map()
-	for ( const { l } of rows ) {
-		if ( l.state === 'void' ) continue
-		perRate.set( l.tax, ( perRate.get( l.tax ) ?? 0 ) + Amount( l ) )
-	}
-	const
-	tax = [ ...perRate ]
-	.map( ( [ rate, sub ] ) => [ rate, subtotal ? sub - Math.round( discount * sub / subtotal ) : 0 ] )
-	.map( ( [ rate, base ] ) => `${ rate }% 内税 ${ yen( Math.round( base * rate / ( 100 + rate ) ) ) }` )
-	.join( '　' )
+	,	{ total, tax } = Totals()
 
 	el.innerHTML = `
 		<h2>${ Esc( Label( detail ) ) }</h2>
@@ -183,16 +192,16 @@ $( 'detail' ).addEventListener( 'click', async e => {
 } )
 
 $( 'detail' ).addEventListener( 'input', e => {
-	if ( e.target.id !== 'discount' ) return
+	if ( e.target.id !== 'discount' || !detail ) return
 	discount = Number( e.target.value ) || 0
-	//	Redrawing would take the focus out of the field mid-keystroke, so only the totals move.
+
+	//	Redrawing would take the focus out of the field mid-keystroke, so the two figures that
+	//	move are patched in place. Both of them: a tax line that lags the discount is a wrong
+	//	number sitting under a right one.
 	const
-	el = $( 'detail' ).querySelector( '.total' )
-	if ( !el ) return
-	const
-	subtotal = detail.tickets.flatMap( t => t.lines ).filter( l => l.state !== 'void' )
-	.reduce( ( n, l ) => n + ( l.price + l.options.reduce( ( m, o ) => m + o.price, 0 ) ) * l.qty, 0 )
-	el.textContent = yen( Math.max( 0, subtotal - discount ) )
+	{ total, tax } = Totals()
+	$( 'detail' ).querySelector( '.total' ).textContent = yen( total )
+	$( 'detail' ).querySelector( '.tax' ).textContent = tax
 } )
 
 const
