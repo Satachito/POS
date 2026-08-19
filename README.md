@@ -220,13 +220,14 @@ codes. Names, prices, tax rates, option surcharges and every total are resolved 
 
 ### Settlement
 
-Settling records that a bill was settled and for how much. Nothing else: no tendered amount,
-no change, no payment method. Counting out a note happens at the drawer where it can be seen,
-and keying it in again only creates a second number to disagree with the first.
+Settling records that a bill was settled and for how much. There is no payment method: the
+day's takings are what was sold, and **`/pos/sales` cannot tell cash from card** — a store on
+cards needs something else to reconcile against.
 
-The cost of that is real and worth knowing: **`/pos/sales` cannot tell cash from card**. It
-reports what was sold, not what is in the till. A store taking card payments needs something
-else to reconcile against.
+A bill settled at a drawer may carry `tendered`, and the server stores the `change` it
+implies. That is a record of a drawer movement, not of the sale, and it is optional: the
+handy settles at the table where there is no drawer and simply omits it. `/pos/sales` totals
+the sale either way, so a night settled from both places still adds up.
 
 ### Tax
 
