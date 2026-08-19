@@ -82,7 +82,7 @@ table		{ width: 100%; border-collapse: collapse; }
 td			{ border-bottom: 1px solid var(--line); padding: .45rem .3rem; vertical-align: top; }
 td.qty		{ width: 2.6rem; font-weight: 700; }
 td.amt		{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-td.act		{ width: 3.4rem; text-align: right; }
+td.act		{ width: 4.4rem; text-align: right; }
 tr.void td	{ color: var(--dim); text-decoration: line-through; }
 .opt		{ color: var(--accent); font-size: .8rem; }
 .note		{ color: #b45309; font-size: .8rem; }
@@ -92,6 +92,9 @@ tr.void td	{ color: var(--dim); text-decoration: line-through; }
 .row .grow	{ flex: 1; }
 .total		{ font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tax		{ font-size: .8rem; color: var(--dim); }
+.notes		{ display: flex; gap: .4rem; flex-wrap: wrap; }
+.change		{ color: var(--open); }
+.change .amount { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 input[type="number"], input[type="text"] {
 	font			: inherit;
@@ -119,5 +122,5 @@ button.settle {
 	border-color	: var(--accent);
 	color			: #fff;
 }
-button.void		{ color: var(--danger); border-color: transparent; background: transparent; }
+button.void		{ color: var(--danger); border-color: transparent; background: transparent; padding: .3rem .3rem; white-space: nowrap; }
 .empty			{ color: var(--dim); text-align: center; padding: 4rem 1rem; }
