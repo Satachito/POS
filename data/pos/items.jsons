@@ -15,4 +15,4 @@
 {"code":"F-01","category":"F","name":"乾き物","price":800,"tax":10,"station":"kitchen","sold_out":false,"order":10,"options":[]}
 {"code":"F-02","category":"F","name":"チョコ盛り","price":1000,"tax":10,"station":"kitchen","sold_out":false,"order":20,"options":[]}
 {"code":"F-03","category":"F","name":"フルーツ盛り","price":2500,"tax":10,"station":"kitchen","sold_out":false,"order":30,"options":[]}
-{"code":"K-01","category":"K","name":"カラオケ 1曲","price":200,"tax":10,"station":"bar","sold_out":false,"order":10,"options":[]}
+{"code":"K-01","category":"K","name":"カラオケ 5曲","price":1000,"tax":10,"station":"bar","sold_out":false,"order":10,"options":[]}
