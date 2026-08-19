@@ -129,7 +129,7 @@ missing menu is an empty menu, not a crash.
 `config.jsons` holds one record that decides it:
 
 ```json
-{ "key": "store", "name": "…", "order_by": "table" }
+{ "key": "store", "name": "…", "order_by": "table", "auto_items": [] }
 ```
 
 - **`table`** — an izakaya. A bill is opened by pointing at a seat, and a seat holds one bill
@@ -140,8 +140,13 @@ missing menu is an empty menu, not a crash.
   home screen is the list of open tabs, and the kitchen display heads each card with the
   name instead of the seat.
 
-The setting rides in `/pos/menu`, so it is covered by the menu hash and every handy picks up
-a change on its next poll without a reinstall.
+`auto_items` is a list of item codes charged the moment a bill is opened, one per head —
+a snack's set charge, an izakaya's お通し. They arrive as a ticket that is already served, so
+they land on the bill without ever cluttering the kitchen display, and the ticket id is
+derived from the order, so a retried open cannot charge them twice.
+
+These settings ride in `/pos/menu`, so they are covered by the menu hash and every handy
+picks up a change on its next poll without a reinstall.
 
 An **order** is a bill from opening to settlement. A **ticket** is one send to the kitchen;
 its lines never change after they are written, only their served/void state does. Everything
