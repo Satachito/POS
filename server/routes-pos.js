@@ -12,6 +12,7 @@
 //		POST  /pos/item/{code}/soldout      flip one item, from the floor or the counter
 //		GET   /pos/tables                   every table with its open order
 //		GET   /pos/orders                   every unsettled bill, whoever it belongs to
+//		GET   /pos/orders?date=YYYY-MM-DD   the bills settled that day, newest first
 //		POST  /pos/order                    open a table              (idempotent: order_id)
 //		GET   /pos/order/{order_id}         the order, its tickets and the running bill
 //		POST  /pos/order/{order_id}/close   settle                    (an order closes once)
@@ -288,6 +289,32 @@ POSRoutes = pos => {
 		,	total		: Bill( tickets ).total
 		}
 	}
+
+	//	Settled bills are not in the open index, so they come from a scan. A day is a few dozen
+	//	records and a year a few tens of thousands -- and this runs when somebody is standing at
+	//	the counter asking about a bill, not on every order.
+	//
+	//	The total comes from the stored bill, not from recomputing the tickets: a settled bill
+	//	is what was actually charged, discount and all, and must never drift afterwards.
+	const
+	SettledOn = date => [ ...pos.orders.all() ]
+	.filter( _ => _.closed_at?.startsWith( date ) && _.bill )
+	.sort( ( a, b ) => a.closed_at < b.closed_at ? 1 : -1 )
+	.map( _ => ( {
+		order_id	: _.order_id
+	,	number		: _.number
+	,	customer	: _.customer ?? ''
+	,	table		: _.table
+	,	guests		: _.guests
+	,	opened_at	: _.opened_at
+	,	closed_at	: _.closed_at
+	,	tickets		: ( index.byOrder.get( _.order_id ) ?? [] ).length
+	,	total		: _.bill.total
+	,	discount	: _.bill.discount
+	,	tendered	: _.bill.tendered ?? null
+	,	change		: _.bill.change ?? null
+	,	terminal	: _.bill.terminal ?? ''
+	} ) )
 
 	//	Sorted, not in cluster order: put() removes and re-adds a record, so an edited table
 	//	would otherwise jump to the end of every handy's list.
@@ -588,9 +615,14 @@ POSRoutes = pos => {
 				case 'tables':
 					return GET ? SendJSONable( S, Tables() ) : _405( S )
 
-				//	The home screen of a store whose bills belong to people rather than seats.
-				case 'orders':
-					return GET ? SendJSONable( S, OpenOrders().map( Summary ) ) : _405( S )
+				//	The home screen of a store whose bills belong to people rather than seats, and
+				//	with ?date=, the same list for a night that has already been settled.
+				case 'orders': {
+					if ( !GET ) return _405( S )
+					const
+					date = QueryOf( Q ).get( 'date' )
+					return SendJSONable( S, date ? SettledOn( date ) : OpenOrders().map( Summary ) )
+				}
 
 				case 'order':
 					if ( !a )					return POST	? SendJSONable( S, await OpenOrder( Q ) )	: _405( S )

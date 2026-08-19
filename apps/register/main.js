@@ -52,20 +52,31 @@ bills		= []
 ,	detail		= null	//	the refetched order
 ,	discount	= 0
 ,	tendered	= 0
+,	view		= 'open'	//	'open' | 'settled'
 
 //	----------------------------------------------------------------- render
 
 const
+Clock = at => new Date( at ).toLocaleTimeString( 'ja-JP', { hour: '2-digit', minute: '2-digit' } )
+
+const
 RenderBills = () => {
+	const
+	settled = view === 'settled'
 	$( 'count' ).textContent = bills.length ? `${ bills.length }件` : ''
 	$( 'bills' ).innerHTML = bills.length ? bills.map( _ => `
-		<div class="bill" data-id="${ Esc( _.order_id ) }" aria-selected="${ _.order_id === selected }">
+		<div class="bill ${ settled ? 'settled' : '' }" data-id="${ Esc( _.order_id ) }" aria-selected="${ _.order_id === selected }">
 			<div>
 				<div class="who">${ Esc( Label( _ ) ) }</div>
-				<div class="meta">${ [ _.table, `${ _.guests }名`, Elapsed( _.opened_at ), _.number ].filter( Boolean ).map( Esc ).join( '・' ) }</div>
+				<div class="meta">${ [
+					_.table
+				,	`${ _.guests }名`
+				,	settled ? `${ Clock( _.closed_at ) } 会計` : Elapsed( _.opened_at )
+				,	_.number
+				].filter( Boolean ).map( Esc ).join( '・' ) }</div>
 			</div>
 			<div class="amount">${ yen( _.total ) }</div>
-		</div>` ).join( '' ) : '<p class="empty">開いている伝票はありません</p>'
+		</div>` ).join( '' ) : `<p class="empty">${ settled ? '本日まだ会計はありません' : '開いている伝票はありません' }</p>`
 }
 
 const
@@ -120,9 +131,21 @@ RenderDetail = () => {
 	rows = detail.tickets.flatMap( t => t.lines.map( l => ( { t, l } ) ) )
 	,	{ total, tax } = Totals()
 
+	//	A settled bill is a record, not a form: it shows what was charged and offers nothing
+	//	to change. Voiding a line or re-settling would silently rewrite a closed night.
+	const
+	done = !!detail.closed_at
+	,	bill = detail.bill ?? {}
+
 	el.innerHTML = `
-		<h2>${ Esc( Label( detail ) ) }</h2>
-		<div class="meta">${ [ detail.table, `${ detail.guests }名`, Elapsed( detail.opened_at ), detail.number ].filter( Boolean ).map( Esc ).join( '・' ) }</div>
+		<h2>${ Esc( Label( detail ) ) }${ done ? '<span class="settledmark">会計済</span>' : '' }</h2>
+		<div class="meta">${ [
+			detail.table
+		,	`${ detail.guests }名`
+		,	done ? `${ Clock( detail.opened_at ) }〜${ Clock( detail.closed_at ) }` : Elapsed( detail.opened_at )
+		,	detail.number
+		,	done && bill.terminal ? Esc( bill.terminal ) : null
+		].filter( Boolean ).map( Esc ).join( '・' ) }</div>
 		<table><tbody>${ rows.map( ( { t, l } ) => `
 			<tr class="${ l.state === 'void' ? 'void' : '' }">
 				<td class="qty">${ l.qty }</td>
@@ -130,9 +153,18 @@ RenderDetail = () => {
 					${ l.options.map( o => `<span class="opt">${ Esc( o.name ) }</span>` ).join( ' ' ) }
 					${ l.note ? `<div class="note">${ Esc( l.note ) }</div>` : '' }</td>
 				<td class="amt">${ yen( Amount( l ) ) }</td>
-				<td class="act">${ l.state === 'void' ? '' : `<button class="void" data-void="${ Esc( t.ticket_id ) }" data-line="${ l.no }">取消</button>` }</td>
+				<td class="act">${ done || l.state === 'void' ? '' : `<button class="void" data-void="${ Esc( t.ticket_id ) }" data-line="${ l.no }">取消</button>` }</td>
 			</tr>` ).join( '' ) }</tbody></table>
 
+		${ done ? `
+		<div class="foot">
+			${ bill.discount ? `<div class="row"><span class="grow">割引</span><span>${ yen( bill.discount ) }</span></div>` : '' }
+			<div class="row"><span class="grow">合計</span><span class="total">${ yen( bill.total ) }</span></div>
+			${ bill.tendered ? `
+				<div class="row"><span class="grow">預り</span><span>${ yen( bill.tendered ) }</span></div>
+				<div class="row change"><span class="grow">釣銭</span><span class="amount">${ yen( bill.change ) }</span></div>` : '' }
+			<div class="tax">${ ( bill.tax ?? [] ).map( _ => `${ _.rate }% 内税 ${ yen( _.amount ) }` ).join( '　' ) }</div>
+		</div>` : `
 		<div class="foot">
 			<div class="row">
 				<span class="grow">割引</span>
@@ -150,14 +182,14 @@ RenderDetail = () => {
 			<div class="row change" id="change">${ ChangeLine( total ) }</div>
 			<div class="tax">${ tax }</div>
 			<button class="settle" id="settle">会計する</button>
-		</div>`
+		</div>` }`
 }
 
 //	----------------------------------------------------------------- data
 
 const
 Reload = async () => {
-	bills = await GET( 'orders' )
+	bills = await GET( view === 'settled' ? `orders?date=${ Today() }` : 'orders' )
 	RenderBills()
 
 	const
@@ -165,8 +197,9 @@ Reload = async () => {
 	$( 'today' ).innerHTML = `本日 <b>${ sales.orders }</b>件　<b>${ yen( sales.total ) }</b>`
 		+ ( sales.guests ? `　客単価 <b>${ yen( sales.per_guest ) }</b>` : '' )
 
-	//	A selected bill that somebody else settled first should not linger on screen.
-	if ( selected && !bills.some( _ => _.order_id === selected ) ) { selected = null; detail = null; RenderDetail() }
+	//	A selected bill that somebody else settled first should not linger as a form. It is
+	//	refetched either way, so it simply becomes the settled record of itself.
+	if ( selected && !bills.some( _ => _.order_id === selected ) && view === 'open' ) { selected = null; detail = null; RenderDetail() }
 	else if ( selected ) await Open( selected, false )
 }
 
@@ -180,6 +213,18 @@ Open = async ( orderId, reset = true ) => {
 }
 
 //	----------------------------------------------------------------- events
+
+$( 'tabs' ).addEventListener( 'click', async e => {
+	const
+	b = e.target.closest( '[data-view]' )
+	if ( !b || b.dataset.view === view ) return
+	view = b.dataset.view
+	for ( const _ of $( 'tabs' ).querySelectorAll( '[data-view]' ) ) _.setAttribute( 'aria-pressed', _.dataset.view === view )
+	selected = null
+	detail = null
+	RenderDetail()
+	await Reload().catch( Report )
+} )
 
 $( 'bills' ).addEventListener( 'click', async e => {
 	const
@@ -228,7 +273,7 @@ $( 'detail' ).addEventListener( 'click', async e => {
 //	sitting under a right one.
 const
 Repaint = () => {
-	if ( !detail ) return
+	if ( !detail || detail.closed_at ) return
 	const
 	{ total, tax } = Totals()
 	$( 'detail' ).querySelector( '.total' ).textContent	= yen( total )

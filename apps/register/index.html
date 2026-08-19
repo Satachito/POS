@@ -15,7 +15,11 @@
 
 <main>
 	<section class="list">
-		<h2>開いている伝票 <span id="count"></span></h2>
+		<nav id="tabs">
+			<button data-view="open" aria-pressed="true">開いている</button>
+			<button data-view="settled" aria-pressed="false">本日締めた</button>
+			<span id="count"></span>
+		</nav>
 		<div id="bills"></div>
 	</section>
 	<section id="detail" class="detail">
