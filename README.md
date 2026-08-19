@@ -218,6 +218,14 @@ through the pass twice, and it happens on a real floor within the first week.
 codes. Names, prices, tax rates, option surcharges and every total are resolved here from
 `items.jsons`. A stale menu cache on a handy cannot move a yen.
 
+### Settlement
+
+A bill records what was taken, by method, and the amounts have to add up to it exactly.
+There is no tendered amount and no change: counting out a note and its change happens at the
+drawer where it can be seen, and keying it in again only creates a second number to disagree
+with the first. `/pos/sales` still nets out the change on bills closed before this, so a
+day's takings stay comparable across the switch.
+
 ### Tax
 
 Menu prices are tax-inclusive, as printed. The tax component is reported per rate and
