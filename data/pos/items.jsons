@@ -1,0 +1,19 @@
+{"code":"D-01","category":"D","name":"生ビール","price":600,"tax":10,"station":"bar","sold_out":false,"order":10,"options":[{"code":"M","name":"メガ","price":300}]}
+{"code":"D-02","category":"D","name":"ハイボール","price":500,"tax":10,"station":"bar","sold_out":false,"order":20,"options":[{"code":"W","name":"濃いめ","price":100}]}
+{"code":"D-03","category":"D","name":"レモンサワー","price":500,"tax":10,"station":"bar","sold_out":false,"order":30,"options":[]}
+{"code":"D-04","category":"D","name":"日本酒 冷酒","price":800,"tax":10,"station":"bar","sold_out":false,"order":40,"options":[]}
+{"code":"D-05","category":"D","name":"ウーロン茶","price":350,"tax":10,"station":"bar","sold_out":false,"order":50,"options":[]}
+{"code":"A-01","category":"A","name":"お通し","price":300,"tax":10,"station":"kitchen","sold_out":false,"order":10,"options":[]}
+{"code":"A-02","category":"A","name":"冷やしトマト","price":450,"tax":10,"station":"kitchen","sold_out":false,"order":20,"options":[]}
+{"code":"A-03","category":"A","name":"シーザーサラダ","price":780,"tax":10,"station":"kitchen","sold_out":false,"order":30,"options":[{"code":"B","name":"ベーコン追加","price":200}]}
+{"code":"A-04","category":"A","name":"枝豆","price":380,"tax":10,"station":"kitchen","sold_out":false,"order":40,"options":[]}
+{"code":"Y-01","category":"Y","name":"焼き鳥盛り合わせ","price":980,"tax":10,"station":"kitchen","sold_out":false,"order":10,"options":[{"code":"T","name":"タレ","price":0},{"code":"S","name":"塩","price":0}]}
+{"code":"Y-02","category":"Y","name":"ホッケ焼き","price":1200,"tax":10,"station":"kitchen","sold_out":false,"order":20,"options":[]}
+{"code":"Y-03","category":"Y","name":"厚揚げ焼き","price":480,"tax":10,"station":"kitchen","sold_out":false,"order":30,"options":[]}
+{"code":"F-01","category":"F","name":"鶏の唐揚げ","price":680,"tax":10,"station":"kitchen","sold_out":false,"order":10,"options":[{"code":"L","name":"大盛","price":200},{"code":"N","name":"レモン抜き","price":0}]}
+{"code":"F-02","category":"F","name":"ポテトフライ","price":480,"tax":10,"station":"kitchen","sold_out":false,"order":20,"options":[]}
+{"code":"F-03","category":"F","name":"串カツ盛り","price":880,"tax":10,"station":"kitchen","sold_out":false,"order":30,"options":[]}
+{"code":"S-01","category":"S","name":"焼きおにぎり","price":420,"tax":10,"station":"kitchen","sold_out":false,"order":10,"options":[]}
+{"code":"S-02","category":"S","name":"だし茶漬け","price":580,"tax":10,"station":"kitchen","sold_out":false,"order":20,"options":[]}
+{"code":"S-03","category":"S","name":"〆のラーメン","price":780,"tax":10,"station":"kitchen","sold_out":false,"order":30,"options":[]}
+{"code":"Z-01","category":"Z","name":"バニラアイス","price":380,"tax":10,"station":"kitchen","sold_out":false,"order":10,"options":[]}
